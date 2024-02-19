@@ -1,0 +1,8 @@
+const catchAsync = require('../middlewares/catchAsync')
+exports.signup = catchAsync(async (req, res, next) => {})
+exports.login = catchAsync(async (req, res, next) => {})
+exports.forgetPassword = catchAsync(async (req, res, next) => {})
+exports.resetPassword = catchAsync(async (req, res, next) => {})
+exports.updatePassword = catchAsync(async (req, res, next) => {})
+exports.protect = catchAsync(async (req, res, next) => {})
+exports.giveAccessTo = catchAsync(async (req, res, next) => {})
