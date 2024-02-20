@@ -11,7 +11,9 @@ const handleInvalidIdDB = (err) => {
 	return new AppError(400, message)
 }
 const handleDuplicateValDB = (err) => {
-	let messageErr = `duplicate field value: ${err.keyValue.name}`
+	let messageErr = `duplicate field value: ${Object.keys(err.keyValue)} : ${
+		err.keyValue[Object.keys(err.keyValue)]
+	}`
 	return new AppError(400, messageErr)
 }
 const handleValidationDB = (err) => {
@@ -56,11 +58,11 @@ module.exports = (error, req, res, next) => {
 	else if (process.env.NODE_ENV === 'production') {
 		let err = { ...error }
 		err.message = error.message
-		if (error.name === 'CastError') err = handleInvalidIdDB(err)
+		if (error.name === 'CastError') err = handleInvalidIdDB(err) // ):
 		if (error.code === 11000) err = handleDuplicateValDB(err)
-		if (error._message === 'Validation failed') err = handleValidationDB(err)
+		if (error.name === 'ValidationError') err = handleValidationDB(err)
 		if (error.name === 'JsonWebTokenError') err = handleTokenError()
-		if (error.name === 'tokenExpiredError') err = handleExpiredToken()
-		sendErrorProd(err, res)
+		if (error.name === 'TokenExpiredError') err = handleExpiredToken()
+		sendErrorProd(err, res) // ):
 	}
 }

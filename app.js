@@ -9,12 +9,10 @@ const globalErrorHandlingMiddleware = require('./controllers/globalHandlerError'
 // Middlewares
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'))
 app.use(express.json())
-console.log(process.env.NODE_ENV)
 //////////////////////////////////////////////////////
 // Mounting routes
-app.use('/first', (req, res) => res.send('first'))
-app.use('/second', (req, res) => res.send('second'))
-// app.use('/api/v1/auth', authRoute)
+
+app.use('/api/v1/auth', authRoute)
 app.all('*', (req, res, next) => {
 	next(new AppError(404, 'this route is not defined'))
 })
