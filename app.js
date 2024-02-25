@@ -1,5 +1,5 @@
 const express = require('express')
-const morgan = require('morgan')
+// const morgan = require('morgan')
 const path = require('path')
 const rateLimit = require('express-rate-limit')
 const helmet = require('helmet')
@@ -27,7 +27,7 @@ const limiter = rateLimit({
 })
 app.use('/api', limiter)
 app.use(compression())
-if (process.env.NODE_ENV === 'development') app.use(morgan('dev'))
+// if (process.env.NODE_ENV === 'development') app.use(morgan('dev'))
 //////////////////////////////////////////////////////
 // Mounting routes
 app.use('/api/v1/auth', authRoute)
