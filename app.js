@@ -17,12 +17,19 @@ const globalErrorHandlingMiddleware = require('./controllers/globalHandlerError'
 // Middlewares
 app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.json({ limit: '10kb' }))
+app.set('trust proxy', true)
 app.use(mongoSanitize())
 app.use(xss())
 app.use(helmet({ contentSecurityPolicy: false }))
+const keyGenerator = (req) => {
+	return req.ip
+}
 const limiter = rateLimit({
-	max: 100,
 	window: 60 * 60 * 1000, //1hour
+	limit: 100,
+	standardHeaders: 'draft-7',
+	legacyHeaders: false,
+	keyGenerator,
 	message: 'Too many requests from the same IP , try again after 1hour',
 })
 app.use('/api', limiter)
