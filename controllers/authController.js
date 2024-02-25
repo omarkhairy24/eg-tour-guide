@@ -3,31 +3,84 @@ const catchAsync = require('../middlewares/catchAsync')
 const User = require('../models/users')
 const jwt = require('jsonwebtoken')
 const { promisify } = require('util')
+const SendEmail = require('../middlewares/SendMail')
+const crypto = require('crypto')
 ////////////////////////////////////////////////////////////
 const signToken = (id) => {
 	return jwt.sign({ id }, process.env.JWTSECRET, {
 		expiresIn: process.env.JWT_EXPIRE_IN,
 	})
 }
-////////////////////////////////////////////////////////////
-exports.signup = catchAsync(async (req, res, next) => {
-	const user = await User.create({
-		firstName: req.body.firstName,
-		lastName: req.body.lastName,
-		photo: req.body.photo,
-		password: req.body.password,
-		email: req.body.email,
-		gender: req.body.gender,
-		governmentLocation: req.body.governmentLocation,
-	})
-	const token = signToken(user._id)
-	res.status(201).json({
+const sendResWithToken = (user, statusCode, res) => {
+	const token = signToken(user.id)
+	user.password = undefined
+	res.status(statusCode).json({
 		status: 'success',
 		data: {
 			token,
 			user,
 		},
 	})
+}
+////////////////////////////////////////////////////////////
+let current
+exports.signup = catchAsync(async (req, res, next) => {
+	const {
+		firstName,
+		lastName,
+		photo,
+		password,
+		email,
+		gender,
+		governmentLocation,
+	} = req.body
+
+	const user = await User.create({
+		firstName,
+		lastName,
+		photo,
+		password,
+		email,
+		gender,
+		governmentLocation,
+	})
+	current = user
+	const code = user.createCodeForSignUp()
+	await user.save()
+	try {
+		await new SendEmail(user, code).sendWelcome()
+		res.status(200).json({
+			status: 'success',
+			message: `Welcome ${user.firstName} , enter code sent to your mail`,
+		})
+	} catch (err) {
+		console.log(err)
+		user.codeSignUp = undefined
+		user.codeSignUpExpiresIn = undefined
+		user.save()
+		return next(new AppError(500, err.message))
+	}
+})
+exports.completeSignUp = catchAsync(async (req, res, next) => {
+	const { code } = req.params
+	const cryptedCode = crypto
+		.createHash('sha256')
+		.update(`${code}`)
+		.digest('hex')
+	const user = await User.findOne({
+		codeSignUp: cryptedCode,
+		codeSignUpExpiresIn: {
+			$gt: Date.now(),
+		},
+	})
+	if (!user) {
+		await User.findByIdAndDelete(current.id)
+		return next(new AppError(400, 'this code might not be valid or correct'))
+	}
+	user.codeSignUp = undefined
+	user.codeSignUpExpiresIn = undefined
+	await user.save({ validateBeforeSave: false })
+	sendResWithToken(user, 201, res)
 })
 exports.login = catchAsync(async (req, res, next) => {
 	// 1
@@ -41,17 +94,8 @@ exports.login = catchAsync(async (req, res, next) => {
 		return next(new AppError(401, 'your email or password is wrong'))
 
 	//4
-	const token = signToken(user._id)
-	res.status(202).json({
-		status: 'success',
-		data: {
-			token,
-		},
-	})
+	sendResWithToken(user, 202, res)
 })
-exports.forgetPassword = catchAsync(async (req, res, next) => {})
-exports.resetPassword = catchAsync(async (req, res, next) => {})
-exports.updatePassword = catchAsync(async (req, res, next) => {})
 exports.protect = catchAsync(async (req, res, next) => {
 	let token
 	//1)get the token and check for it
@@ -81,3 +125,65 @@ exports.giveAccessTo = (...roles) => {
 		next()
 	}
 }
+exports.forgetPassword = catchAsync(async (req, res, next) => {
+	// 1-get user
+	const { email } = req.body
+	if (!email) return next(new AppError(401, 'enter your mail and try again'))
+	const user = await User.findOne({ email })
+	if (!user) return next(new AppError(404, 'this user is not found'))
+
+	// 2- generate random 6-digits number
+	const randomNum = user.createRandomNumber()
+	await user.save()
+	// console.log(randomNum)
+
+	//3- send using nodemailer
+	try {
+		await new SendEmail(user, randomNum).sendResetPassword()
+		res.status(200).json({
+			status: 'success',
+			message: 'email was sent',
+		})
+	} catch (err) {
+		console.log(err)
+		user.passwordResetCode = undefined
+		user.passwordResetExpireIn = undefined
+		user.save()
+		return next(new AppError(500, err.message))
+	}
+})
+exports.resetPassword = catchAsync(async (req, res, next) => {
+	const { code } = req.params
+	const cryptedCode = crypto
+		.createHash('sha256')
+		.update(`${code}`)
+		.digest('hex')
+	const user = await User.findOne({
+		passwordResetCode: cryptedCode,
+		passwordResetExpireIn: {
+			$gt: Date.now(),
+		},
+	})
+	if (!user)
+		return next(new AppError(400, 'this code might not be valid or correct'))
+	// console.log(user)
+	user.password = req.body.password
+	user.passwordChangedAt = Date.now()
+	user.passwordResetCode = undefined
+	user.passwordResetExpireIn = undefined
+	await user.save()
+	sendResWithToken(user, 201, res)
+})
+
+exports.updatePassword = catchAsync(async (req, res, next) => {
+	//1 get user
+	const user = await User.findById(req.user.id).select('+password')
+	//2 check passwords
+	if (!(await user.comparePasswords(req.password, user.password)))
+		return next(new AppError(402, 'the password you passed is not correct'))
+	//3 update password
+	user.password = req.body.password
+	await user.save()
+	// log user in
+	sendResWithToken(user, 200, res)
+})

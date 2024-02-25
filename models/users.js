@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 const bcryptjs = require('bcryptjs')
+const crypto = require('crypto')
 const schema = new mongoose.Schema({
 	firstName: {
 		type: String,
@@ -18,6 +19,7 @@ const schema = new mongoose.Schema({
 		type: String,
 		enum: ['user', 'admin'],
 		default: 'user',
+		select: false,
 	},
 	password: {
 		type: String,
@@ -48,7 +50,12 @@ const schema = new mongoose.Schema({
 	},
 	passwordChangedAt: {
 		type: Date,
+		select: false,
 	},
+	passwordResetCode: String,
+	passwordResetExpireIn: Date,
+	codeSignUp: String,
+	codeSignUpExpiresIn: Date,
 })
 /////////////////////////////////////////////
 schema.pre('save', async function (next) {
@@ -67,6 +74,22 @@ schema.methods.changePasswordAfterJwt = function (jwtTimeStamp) {
 		return passwordTimeChangeMs > jwtTimeStamp
 	}
 	return false
+}
+schema.methods.createCodeForSignUp = function () {
+	const code = crypto.randomInt(100000, 999999)
+	this.codeSignUp = crypto.createHash('sha256').update(`${code}`).digest('hex')
+	this.codeSignUpExpiresIn = Date.now() + 10 * 60 * 1000
+	return code
+}
+schema.methods.createRandomNumber = function () {
+	const code = crypto.randomInt(100000, 999999)
+	this.passwordResetCode = crypto
+		.createHash('sha256')
+		.update(`${code}`)
+		.digest('hex')
+	// console.log(this.passwordResetCode)
+	this.passwordResetExpireIn = Date.now() + 5 * 60 * 1000 //5 min
+	return code
 }
 /////////////////////////////////////////////
 const User = mongoose.model('User', schema)
