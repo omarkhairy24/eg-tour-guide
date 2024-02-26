@@ -9,7 +9,10 @@ router.post('/login', authController.login)
 router.post('/forget-password', authController.forgetPassword)
 router.patch('/reset-password/:code', authController.resetPassword)
 
-router.get('/google', passport.authenticate('google', { scope: ['profile'] }))
+router.get(
+	'/google',
+	passport.authenticate('google', { scope: ['profile', 'email'] })
+)
 router.get(
 	'/google/redirect',
 	passport.authenticate('google', {
