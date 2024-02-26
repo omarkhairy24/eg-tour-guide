@@ -7,7 +7,9 @@ passport.use(
 		{
 			clientID: process.env.GOOGLE_CLIENT_ID,
 			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-			callbackURL: 'http://127.0.0.1:3000/api/v1/auth/google/redirect',
+			callbackURL:
+				'https://puce-courageous-coyote.cyclic.app/api/v1/auth/google/redirect',
+			// callbackURL: `'http://127.0.0.1:3000/api/v1/auth/google/redirect'`,
 		},
 		async function (accessToken, refreshToken, profile, cb) {
 			try {
