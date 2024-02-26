@@ -22,6 +22,7 @@ const sendResWithToken = (user, statusCode, res) => {
 		},
 	})
 }
+
 ////////////////////////////////////////////////////////////
 let current
 exports.signup = catchAsync(async (req, res, next) => {
@@ -186,4 +187,15 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 	await user.save()
 	// log user in
 	sendResWithToken(user, 200, res)
+})
+
+exports.googleRes = catchAsync(async (req, res, next) => {
+	const { user, token } = req.user
+	res.status(200).json({
+		status: 'success',
+		data: {
+			token,
+			user,
+		},
+	})
 })

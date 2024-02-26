@@ -36,12 +36,12 @@ const schema = new mongoose.Schema({
 	},
 	gender: {
 		type: String,
-		required: [true, 'you should have a gender'],
+		// required: [true, 'you should have a gender'],
 		enum: ['male', 'female', 'some thing else'],
 	},
 	governmentLocation: {
 		type: String,
-		required: [true, 'enter your government'],
+		// required: [true, 'enter your government'],
 	},
 	active: {
 		type: Boolean,
@@ -56,6 +56,7 @@ const schema = new mongoose.Schema({
 	passwordResetExpireIn: Date,
 	codeSignUp: String,
 	codeSignUpExpiresIn: Date,
+	googleId: String,
 })
 /////////////////////////////////////////////
 schema.pre('save', async function (next) {

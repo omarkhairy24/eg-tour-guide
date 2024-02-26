@@ -13,6 +13,7 @@ const authRoute = require('./routes/auth')
 const usersRoute = require('./routes/users')
 const AppError = require('./middlewares/AppError')
 const globalErrorHandlingMiddleware = require('./controllers/globalHandlerError')
+const googlePassport = require('./middlewares/passportSetup')
 /////////////////////////////////////
 // Middlewares
 app.use(express.static(path.join(__dirname, 'public')))
