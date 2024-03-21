@@ -3,17 +3,18 @@ const validator = require('validator')
 const bcryptjs = require('bcryptjs')
 const crypto = require('crypto')
 const schema = new mongoose.Schema({
-	firstName: {
+	username: {
 		type: String,
-		required: [true, 'you should have a first name'],
+		required: [true, 'you should have a username'],
+		minLength:3
 	},
-	lastName: {
-		type: String,
-		required: [true, 'you should have a last name'],
+	phone:{
+		type:String,
+		required:true,
+		minLength:8
 	},
 	photo: {
-		type: String,
-		default: 'default.js',
+		type: String
 	},
 	role: {
 		type: String,
@@ -38,10 +39,6 @@ const schema = new mongoose.Schema({
 		type: String,
 		// required: [true, 'you should have a gender'],
 		enum: ['male', 'female'],
-	},
-	governmentLocation: {
-		type: String,
-		// required: [true, 'enter your government'],
 	},
 	active: {
 		type: Boolean,
