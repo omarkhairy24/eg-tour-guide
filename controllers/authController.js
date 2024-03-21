@@ -23,66 +23,105 @@ const sendResWithToken = (user, statusCode, res) => {
 	})
 }
 
-////////////////////////////////////////////////////////////
-let current
-exports.signup = catchAsync(async (req, res, next) => {
-	const {
-		firstName,
-		lastName,
-		photo,
-		password,
-		email,
-		gender,
-		governmentLocation,
-	} = req.body
 
+exports.restrictTo = (...roles)=>{
+	return (req,res,next)=>{
+		if(roles.includes(req.user.role)){
+			return next(new AppError('not allowed',403))
+		}
+		next();
+	}
+}
+
+////////////////////////////////////////////////////////////
+exports.sendCode = catchAsync(async (req,res,next)=>{
+	const email = req.body.email;
+
+	const isExist = await User.findOne({email:email});
+	if(isExist){
+		return next(new AppError('this email already exist',403));
+	}
+
+	const code = crypto.randomInt(100000, 999999)
+	await new SendEmail(email,code).sendWelcome();
+	res.status(200).json({
+		status: 'success',
+		message: `Welcome , enter code sent to your mail`,
+		code,
+		email
+	})
+})
+
+exports.signup = catchAsync(async(req,res,next)=>{
 	const user = await User.create({
-		firstName,
-		lastName,
-		photo,
-		password,
-		email,
-		gender,
-		governmentLocation,
-	})
-	current = user
-	const code = user.createCodeForSignUp()
-	await user.save()
-	try {
-		await new SendEmail(user, code).sendWelcome()
-		res.status(200).json({
-			status: 'success',
-			message: `Welcome ${user.firstName} , enter code sent to your mail`,
-		})
-	} catch (err) {
-		console.log(err)
-		user.codeSignUp = undefined
-		user.codeSignUpExpiresIn = undefined
-		user.save()
-		return next(new AppError(500, err.message))
-	}
-})
-exports.completeSignUp = catchAsync(async (req, res, next) => {
-	const { code } = req.params
-	const cryptedCode = crypto
-		.createHash('sha256')
-		.update(`${code}`)
-		.digest('hex')
-	const user = await User.findOne({
-		codeSignUp: cryptedCode,
-		codeSignUpExpiresIn: {
-			$gt: Date.now(),
-		},
-	})
-	if (!user) {
-		await User.findByIdAndDelete(current.id)
-		return next(new AppError(400, 'this code might not be valid or correct'))
-	}
-	user.codeSignUp = undefined
-	user.codeSignUpExpiresIn = undefined
-	await user.save({ validateBeforeSave: false })
-	sendResWithToken(user, 201, res)
-})
+		username:req.body.username,
+		phone:req.body.phone,
+		email:req.body.email,
+		password:req.body.password,
+	});
+	sendResWithToken(user,201,res);
+});
+
+// let current
+// exports.signup = catchAsync(async (req, res, next) => {
+// 	const {
+// 		firstName,
+// 		lastName,//
+// 		photo,//
+// 		password,
+// 		email,
+// 		gender,//
+// 		governmentLocation,//+phone
+// 	} = req.body
+
+// 	const user = await User.create({
+// 		firstName,
+// 		lastName,
+// 		photo,
+// 		password,
+// 		email,
+// 		gender,
+// 		governmentLocation,
+// 	})
+// 	current = user
+// 	const code = user.createCodeForSignUp()
+// 	await user.save()
+// 	try {
+// 		await new SendEmail(user, code).sendWelcome()
+// 		res.status(200).json({
+// 			status: 'success',
+// 			message: `Welcome ${user.firstName} , enter code sent to your mail`,
+// 		})
+// 	} catch (err) {
+// 		console.log(err)
+// 		user.codeSignUp = undefined
+// 		user.codeSignUpExpiresIn = undefined
+// 		user.save()
+// 		return next(new AppError(500, err.message))
+// 	}
+// })
+// exports.completeSignUp = catchAsync(async (req, res, next) => {
+// 	const { code } = req.params
+// 	const cryptedCode = crypto
+// 		.createHash('sha256')
+// 		.update(`${code}`)
+// 		.digest('hex')
+// 	const user = await User.findOne({
+// 		codeSignUp: cryptedCode,
+// 		codeSignUpExpiresIn: {
+// 			$gt: Date.now(),
+// 		},
+// 	})
+// 	if (!user) {
+// 		await User.findByIdAndDelete(current.id)
+// 		return next(new AppError(400, 'this code might not be valid or correct'))
+// 	}
+// 	user.codeSignUp = undefined
+// 	user.codeSignUpExpiresIn = undefined
+// 	await user.save({ validateBeforeSave: false })
+// 	sendResWithToken(user, 201, res)
+// })
+
 exports.login = catchAsync(async (req, res, next) => {
 	// 1
 	const { email, password } = req.body

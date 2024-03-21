@@ -4,7 +4,7 @@ const htmlToText = require('html-to-text')
 //////////////////////////////////////////////////
 class Email {
 	constructor(user, code) {
-		this.to = user.email
+		this.to = user
 		this.from = 'admin@itour.com'
 		this.firstName = user.firstName
 		this.code = code
@@ -37,7 +37,7 @@ class Email {
 		const html = pug.renderFile(
 			`${__dirname}/../views/emails/${templete}.pug`,
 			{
-				firstName: this.firstName,
+				// firstName: this.firstName,
 				subject,
 				code: this.code,
 			}
