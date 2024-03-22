@@ -174,12 +174,12 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 
 	// 2- generate random 6-digits number
 	const randomNum = user.createRandomNumber()
-	await user.save()
+	await user.save({validateBeforeSave:false})
 	// console.log(randomNum)
 
 	//3- send using nodemailer
 	try {
-		await new SendEmail(user, randomNum).sendResetPassword()
+		await new SendEmail(user.email, randomNum).sendResetPassword()
 		res.status(200).json({
 			status: 'success',
 			message: 'email was sent',
@@ -188,10 +188,11 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 		console.log(err)
 		user.passwordResetCode = undefined
 		user.passwordResetExpireIn = undefined
-		user.save()
+		user.save({validateBeforeSave:false})
 		return next(new AppError(500, err.message))
 	}
 })
+
 exports.resetPassword = catchAsync(async (req, res, next) => {
 	const { code } = req.params
 	const cryptedCode = crypto
@@ -211,7 +212,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 	user.passwordChangedAt = Date.now()
 	user.passwordResetCode = undefined
 	user.passwordResetExpireIn = undefined
-	await user.save()
+	await user.save({validateModifiedOnly:true})
 	sendResWithToken(user, 201, res)
 })
 
