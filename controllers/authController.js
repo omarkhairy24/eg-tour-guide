@@ -23,44 +23,43 @@ const sendResWithToken = (user, statusCode, res) => {
 	})
 }
 
-
-exports.restrictTo = (...roles)=>{
-	return (req,res,next)=>{
-		if(roles.includes(req.user.role)){
-			return next(new AppError('not allowed',403))
+exports.restrictTo = (...roles) => {
+	return (req, res, next) => {
+		if (roles.includes(req.user.role)) {
+			return next(new AppError('not allowed', 403))
 		}
-		next();
+		next()
 	}
 }
 
 ////////////////////////////////////////////////////////////
-exports.sendCode = catchAsync(async (req,res,next)=>{
-	const email = req.body.email;
+exports.sendCode = catchAsync(async (req, res, next) => {
+	const email = req.body.email
 
-	const isExist = await User.findOne({email:email});
-	if(isExist){
-		return next(new AppError('this email already exist',403));
+	const isExist = await User.findOne({ email: email })
+	if (isExist) {
+		return next(new AppError('this email already exist', 403))
 	}
 
 	const code = crypto.randomInt(100000, 999999)
-	await new SendEmail(email,code).sendWelcome();
+	await new SendEmail(email, code).sendWelcome()
 	res.status(200).json({
 		status: 'success',
 		message: `Welcome , enter code sent to your mail`,
 		code,
-		email
+		email,
 	})
 })
 
-exports.signup = catchAsync(async(req,res,next)=>{
+exports.signup = catchAsync(async (req, res, next) => {
 	const user = await User.create({
-		username:req.body.username,
-		phone:req.body.phone,
-		email:req.body.email,
-		password:req.body.password,
-	});
-	sendResWithToken(user,201,res);
-});
+		username: req.body.username,
+		phone: req.body.phone,
+		email: req.body.email,
+		password: req.body.password,
+	})
+	sendResWithToken(user, 201, res)
+})
 
 // let current
 // exports.signup = catchAsync(async (req, res, next) => {
@@ -174,7 +173,7 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 
 	// 2- generate random 6-digits number
 	const randomNum = user.createRandomNumber()
-	await user.save()
+	await user.save({ validateBeforeSave: false })
 	// console.log(randomNum)
 
 	//3- send using nodemailer
@@ -188,7 +187,7 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 		console.log(err)
 		user.passwordResetCode = undefined
 		user.passwordResetExpireIn = undefined
-		user.save()
+		await user.save({ validateBeforeSave: false })
 		return next(new AppError(500, err.message))
 	}
 })
