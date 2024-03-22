@@ -178,7 +178,7 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 
 	//3- send using nodemailer
 	try {
-		await new SendEmail(user, randomNum).sendResetPassword()
+		await new SendEmail(user.email, randomNum).sendResetPassword()
 		res.status(200).json({
 			status: 'success',
 			message: 'email was sent',
@@ -191,6 +191,7 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 		return next(new AppError(500, err.message))
 	}
 })
+
 exports.resetPassword = catchAsync(async (req, res, next) => {
 	const { code } = req.params
 	const cryptedCode = crypto
