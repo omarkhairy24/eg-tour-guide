@@ -178,7 +178,7 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 
 	//3- send using nodemailer
 	try {
-		await new SendEmail(user.email, randomNum).sendResetPassword()
+		await new SendEmail(user, randomNum).sendResetPassword()
 		res.status(200).json({
 			status: 'success',
 			message: 'email was sent',
