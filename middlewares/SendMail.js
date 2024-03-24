@@ -19,8 +19,8 @@ module.exports = class Email {
 			port: 587,
 			secure: false,
 			auth: {
-				user: 'amrmoha960@gmail.com',
-				pass: 'sdge hwwj ohwg mkln',
+				user: 'egtourguide3@gmail.com',
+				pass: 'jeac snng agsb gddr',
 			},
 		})
 	}
