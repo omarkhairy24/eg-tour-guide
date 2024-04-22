@@ -5,10 +5,10 @@ const htmlToText = require('html-to-text')
 
 module.exports = class Email {
 	constructor(user, code) {
-		this.to = user.email
+		this.to = user
 		this.from = 'admin@itour.io'
 		this.code = code
-		this.firstName = user.firstName
+		this.firstName = user.username
 	}
 
 	transporter() {
@@ -48,7 +48,7 @@ module.exports = class Email {
 	}
 
 	async sendWelcome() {
-		await this.send('welcome', 'Welcome to itour family 👍')
+		await this.send('welcome', 'Welcome to Eg Tour Guide 👍')
 	}
 
 	async sendResetPassword() {

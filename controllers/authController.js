@@ -18,7 +18,7 @@ const sendResWithToken = (user, statusCode, res) => {
 		status: 'success',
 		data: {
 			token,
-			user,
+			user
 		},
 	})
 }
@@ -133,6 +133,9 @@ exports.login = catchAsync(async (req, res, next) => {
 		return next(new AppError(401, 'your email or password is wrong'))
 
 	//4
+	user.passwordResetCode = undefined;
+	user.passwordResetExpireIn = undefined;
+	user.passwordChangedAt = undefined;
 	sendResWithToken(user, 202, res)
 })
 exports.protect = catchAsync(async (req, res, next) => {
@@ -178,10 +181,11 @@ exports.forgetPassword = catchAsync(async (req, res, next) => {
 
 	//3- send using nodemailer
 	try {
-		await new SendEmail(user, randomNum).sendResetPassword()
+		await new SendEmail(user.email, randomNum).sendResetPassword()
 		res.status(200).json({
 			status: 'success',
-			message: 'email was sent',
+			message: 'Email was sent',
+			code :randomNum
 		})
 	} catch (err) {
 		console.log(err)
@@ -212,7 +216,10 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 	user.passwordResetCode = undefined
 	user.passwordResetExpireIn = undefined
 	await user.save()
-	sendResWithToken(user, 201, res)
+	res.status(201).json({
+		status:'success',
+		user
+	})
 })
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
