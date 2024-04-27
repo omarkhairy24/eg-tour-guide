@@ -38,7 +38,10 @@ exports.sendCode = catchAsync(async (req, res, next) => {
 
 	const isExist = await User.findOne({ email: email })
 	if (isExist) {
-		return next(new AppError('this email already exist', 403))
+		return res.status(403).json({
+			status:'error',
+			message:'this email already exist'
+		})
 	}
 
 	const code = crypto.randomInt(100000, 999999)

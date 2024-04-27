@@ -3,8 +3,8 @@ const router = express.Router()
 const authController = require('../controllers/authController')
 const passport = require('passport')
 ////////////////////////////////////////////
-router.post('/signup', authController.signup)
 router.post('/send-code',authController.sendCode);
+router.post('/signup', authController.signup)
 // router.get('/complete-signup/:code', authController.completeSignUp)
 router.post('/login', authController.login)
 router.post('/forget-password', authController.forgetPassword)

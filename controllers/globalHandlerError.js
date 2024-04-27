@@ -8,13 +8,13 @@ const handleExpiredToken = (_) => {
 }
 const handleInvalidIdDB = (err) => {
 	let message = `Invalid ${err.path} : ${err.value}`
-	return new AppError(400, message)
+	return new AppError(err.statusCode, message)
 }
 const handleDuplicateValDB = (err) => {
 	let messageErr = `duplicate field value: ${Object.keys(err.keyValue)} : ${
 		err.keyValue[Object.keys(err.keyValue)]
 	}`
-	return new AppError(400, messageErr)
+	return new AppError(err.statusCode, messageErr)
 }
 const handleValidationDB = (err) => {
 	let message = ` Invalid input data: ${Object.values(err.errors)
