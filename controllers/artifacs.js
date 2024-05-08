@@ -8,7 +8,7 @@ const multerStorage = multer.diskStorage({
         cb(null,'public/img/Artifacss')
     },
     filename:(req,file,cb)=>{
-        cb(null,Date.now() + file.originalname)
+        cb(null,file.originalname)
     }
 });
 
