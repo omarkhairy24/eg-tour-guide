@@ -32,9 +32,8 @@ exports.createPlace = catchAsync(async(req,res,next)=>{
             images.push(file.filename)
         }
     }
-    const{lat,lng} = req.body;
     
-
+    const{lat,lng} = req.body;
      const place = await Places.create({
         name:req.body.name,
         images:images,
