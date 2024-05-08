@@ -17,6 +17,7 @@ const placeRoute = require('./routes/place')
 const favRoute = require('./routes/favorite')
 const eventRoute = require('./routes/event')
 const tourRoute = require('./routes/tours');
+const artifacsRoute = require('./routes/artifacs');
 const globalErrorHandlingMiddleware = require('./controllers/globalHandlerError')
 const googlePassport = require('./middlewares/passportSetup')
 /////////////////////////////////////
@@ -52,6 +53,7 @@ app.use('/api/v1/reviews',reviewRoute)
 app.use('/api/v1/favorite',favRoute)
 app.use('/api/v1/events',eventRoute)
 app.use('/api/v1/tours',tourRoute)
+app.use('/api/v1/artifacs',artifacsRoute);
 app.all('*', (req, res, next) => {
 	next(new AppError(404, 'this route is not defined'))
 })
