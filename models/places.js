@@ -21,6 +21,10 @@ const placeSchema = new mongoose.Schema({
         },
         coordinates:[Number]
     },
+    type:{
+        type:String,
+        required:true
+    },
     category:{
         type:String,
         required:true
