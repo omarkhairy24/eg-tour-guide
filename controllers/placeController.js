@@ -32,12 +32,18 @@ exports.createPlace = catchAsync(async(req,res,next)=>{
             images.push(file.filename)
         }
     }
+    const{lat,lng} = req.body;
+    
+
      const place = await Places.create({
         name:req.body.name,
         images:images,
         govName:req.body.govName,
         description:req.body.description,
-        category:req.body.category
+        category:req.body.category,
+        location:{
+            coordinates:[lat,lng]
+        }
      });
      res.status(201).json({
         status:'success',
