@@ -2,7 +2,7 @@ const placeController = require('../controllers/placeController');
 const authController = require('../controllers/authController');
 const router = require('express').Router();
 
-router.get('/:placeId',placeController.getPlace);
+router.get('/:placeId',authController.protect,placeController.getPlace);
 
 router.get('/',placeController.getPlaces);
 
