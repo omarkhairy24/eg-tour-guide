@@ -16,6 +16,13 @@ const eventSchema = new mongoose.Schema({
         type:Date,
         required:true
     },
+    location:{
+        type:{
+            type:String,
+            enum:['Point']
+        },
+        coordinates:[Number]
+    },
     eDate:{
         type:Date,
         required:true,
@@ -25,6 +32,10 @@ const eventSchema = new mongoose.Schema({
             },
             message:'this date is before the start date'
         }
+    },
+    category:{
+        type:String,
+        required:true
     }
 });
 

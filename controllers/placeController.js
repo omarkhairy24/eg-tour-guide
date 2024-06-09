@@ -1,5 +1,6 @@
 const Places = require('../models/places');
 const catchAsync = require('../middlewares/catchAsync');
+const History = require('../models/history');
 const multer = require('multer');
 const AppError = require('../middlewares/AppError');
 
@@ -96,7 +97,19 @@ exports.deletePlace = catchAsync(async(req,res,next)=>{
 });
 
 exports.getPlace = catchAsync(async (req,res,next)=>{
-    const place = await Places.findById(req.params.placeId).populate('reviews');
+    const [place ,history ] = await Promise.all([
+        Places.findById(req.params.placeId).populate('reviews'),
+        History.findOne({user:req.user.id})
+    ]);
+    if (history){
+        history.place.push(place._id)
+        await history.save()
+    }else{ 
+        History.create({
+            user:req.user.id,
+            place:place._id
+        });
+    }
     res.status(200).json({
         status:'success',
         place

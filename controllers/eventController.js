@@ -26,13 +26,16 @@ exports.addEvent = catchAsync(async(req,res,next)=>{
             images.push(file.filename)
         }
     }
-
+    const{lat,lng} = req.body;
     const event = await Events.create({
         name:req.body.name,
         description:req.body.description,
         images,
         sDate:req.body.sDate,
-        eDate:req.body.eDate
+        eDate:req.body.eDate,
+        location:{
+            coordinates:[lat,lng]
+        }
     });
 
     res.status(201).json({

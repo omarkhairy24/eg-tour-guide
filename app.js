@@ -1,11 +1,9 @@
 const express = require('express')
-// const morgan = require('morgan')
 const path = require('path')
 const rateLimit = require('express-rate-limit')
 const helmet = require('helmet')
 const mongoSanitize = require('express-mongo-sanitize')
 const xss = require('xss-clean')
-const hpp = require('hpp')
 const compression = require('compression');
 //////////////////////////////////////////////////////
 const app = express()
@@ -18,12 +16,15 @@ const favRoute = require('./routes/favorite')
 const eventRoute = require('./routes/event')
 const tourRoute = require('./routes/tours');
 const artifacsRoute = require('./routes/artifacs');
+const appRoute = require('./routes/app');
 const globalErrorHandlingMiddleware = require('./controllers/globalHandlerError')
 const googlePassport = require('./middlewares/passportSetup')
 /////////////////////////////////////
 // Middlewares
 app.use(express.json({ limit: '10kb' }))
 app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static(path.join(__dirname, 'test/view')))
+
 app.use('/placeImages', express.static(path.join(__dirname, 'public/img/places')));
 app.use('/userImages', express.static(path.join(__dirname, 'public/img/users')));
 app.set('trust proxy', true)
@@ -43,7 +44,9 @@ const limiter = rateLimit({
 })
 app.use('/api', limiter)
 app.use(compression())
-// if (process.env.NODE_ENV === 'development') app.use(morgan('dev'))
+
+app.set('view engine','ejs');
+app.set('views','test');
 //////////////////////////////////////////////////////
 // Mounting routes
 app.use('/api/v1/auth', authRoute)
@@ -54,6 +57,7 @@ app.use('/api/v1/favorite',favRoute)
 app.use('/api/v1/events',eventRoute)
 app.use('/api/v1/tours',tourRoute)
 app.use('/api/v1/artifacs',artifacsRoute);
+app.use(appRoute)
 app.all('*', (req, res, next) => {
 	next(new AppError(404, 'this route is not defined'))
 })

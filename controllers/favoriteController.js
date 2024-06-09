@@ -10,7 +10,7 @@ exports.getFavorites = catchAsync(async(req,res,nex)=>{
     })
 })
 
-exports.addFav = catchAsync(async(req,res,next)=>{
+exports.addFavPlace = catchAsync(async(req,res,next)=>{
     let Fav;
     const isFav = await Favorite.findOne({user:req.user.id,place:req.params.placeId});
     if(isFav){
@@ -20,6 +20,25 @@ exports.addFav = catchAsync(async(req,res,next)=>{
         Fav = await Favorite.create({
             user:req.user.id,
             place:req.params.placeId
+        })
+    }
+
+    res.status(200).json({
+        status:'success',
+        Fav
+    })
+});
+
+exports.addFavArtifacs = catchAsync(async(req,res,next)=>{
+    let Fav;
+    const isFav = await Favorite.findOne({user:req.user.id,artifacs:req.params.artifacId});
+    if(isFav){
+        await Favorite.findOneAndDelete({user:req.user.id,artifacs:req.params.artifacId});
+    }
+    else{
+        Fav = await Favorite.create({
+            user:req.user.id,
+            artifacs:req.params.artifacId
         })
     }
 

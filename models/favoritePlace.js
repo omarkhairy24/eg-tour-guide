@@ -8,15 +8,18 @@ const favSchema = new mongoose.Schema({
     },
     place:{
         type:mongoose.Schema.ObjectId,
-        ref:'Places',
-        required:true
+        ref:'Places'
+    },
+    artifacs:{
+        type:mongoose.Schema.ObjectId,
+        ref:'Artifacs'
     }
 });
 
-favSchema.index({user:1,place:1},{unique:true});
+favSchema.index({user:1,place:1,artifacs:1},{unique:true});
 
 favSchema.pre(/^find/,function(next){
-    this.populate('place');
+    this.populate('place artifacs');
     next();
 });
 

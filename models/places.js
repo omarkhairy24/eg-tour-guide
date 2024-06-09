@@ -23,11 +23,13 @@ const placeSchema = new mongoose.Schema({
     },
     type:{
         type:String,
-        required:true
+        required:true,
+        enum:['Museums', 'Liberary', 'Luxury','Ecotourism','Mosque']
     },
     category:{
         type:String,
-        required:true
+        required:true,
+        enum:['Cultural', 'Historical', 'Entertainment','Religion','Adventure','Ecotourism']
     },
     ratingAverage:{
         type:Number,
@@ -39,7 +41,8 @@ const placeSchema = new mongoose.Schema({
     ratingQuantity:{
         type:Number,
         default:0
-    }
+    },
+    vrModel:String
 },{
     toJSON:{virtuals:true},
     toObject:{virtuals:true}

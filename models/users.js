@@ -45,7 +45,6 @@ const schema = new mongoose.Schema({
 	},
 	gender: {
 		type: String,
-		// required: [true, 'you should have a gender'],
 		enum: ['male', 'female'],
 	},
 	active: {
