@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const authController = require('../controllers/authController');
 const appController = require('../app/home');
+const arti = require('../artifacRecognition');
 
 router.get('/home' ,authController.protect,appController.getHome);
 
@@ -12,6 +13,8 @@ router.get('/artifacs',authController.protect,appController.getArtifacts);
 
 router.get('/artifac/:artifacId',authController.protect,appController.getArtifac)
 
-router.get('/search',authController.protect,appController.search)
+router.get('/search',authController.protect,appController.search);
+
+router.get('/rec',arti.upload.single('photo') , arti.recognize);
 
 module.exports = router

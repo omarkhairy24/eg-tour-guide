@@ -1,0 +1,117 @@
+const tf = require('@tensorflow/tfjs-node');
+const mobilenet = require('@tensorflow-models/mobilenet');
+const fs = require('fs');
+const path = require('path');
+const Artifacs = require('./models/artifacs');
+const multer = require('multer');
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'public/img/RecPhoto');
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    }
+});
+
+exports.upload = multer({ storage });
+
+let model;
+
+const loadModel = mobilenet.load().then(loadedModel => {
+    model = loadedModel;
+    console.log('Model loaded successfully');
+}).catch(err => {
+    console.error('Failed to load model', err);
+    process.exit(1);
+});
+
+const loadImage = (imagePath) => {
+    const buf = fs.readFileSync(imagePath);
+    const tensor = tf.node.decodeImage(buf, 3);
+    return tensor;
+};
+
+const extractFeatures = async (imageTensor) => {
+    await loadModel;
+    const activation = model.infer(imageTensor, 'conv_preds');
+    const features = activation.dataSync();
+    imageTensor.dispose();
+    activation.dispose();
+    return features;
+};
+
+const cosineSimilarity = (vecA, vecB) => {
+    const dotProduct = vecA.reduce((sum, a, idx) => sum + a * vecB[idx], 0);
+    const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
+    const normB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
+    return dotProduct / (normA * normB);
+};
+
+const recognizeImage = async (imagePath, artifactImages) => {
+    const imageTensor = loadImage(imagePath);
+    const uploadedImageFeatures = await extractFeatures(imageTensor);
+
+    console.log(`Uploaded image features extracted`);
+
+    let bestMatch = null;
+    let highestSimilarity = -1;
+
+    for (const artifactImage of artifactImages) {
+        const artifactImagePath = path.join(__dirname, artifactImage);
+        if (!fs.existsSync(artifactImagePath)) {
+            console.error(`File not found: ${artifactImagePath}`);
+            continue;
+        }
+
+        const artifactImageTensor = loadImage(artifactImagePath);
+        const artifactImageFeatures = await extractFeatures(artifactImageTensor);
+
+        const similarity = cosineSimilarity(uploadedImageFeatures, artifactImageFeatures);
+        console.log(`Similarity with ${artifactImagePath}: ${similarity}`);
+
+        if (similarity > highestSimilarity) {
+            highestSimilarity = similarity;
+            bestMatch = artifactImage;
+        }
+
+        artifactImageTensor.dispose();
+    }
+
+    return { bestMatch, highestSimilarity };
+};
+
+exports.recognize = async (req, res) => {
+    const imagePath = req.file.path;
+
+    try {
+        const artifacts = await Artifacs.find().lean();
+
+        let bestArtifact = null;
+        let highestSimilarity = -1;
+
+        for (const artifact of artifacts) {
+            const artifactImages = artifact.images.map(image => path.join('public/img/Artifacss', image));
+            const { bestMatch, highestSimilarity: similarity } = await recognizeImage(imagePath, artifactImages);
+
+            if (similarity > highestSimilarity) {
+                highestSimilarity = similarity;
+                bestArtifact = artifact;
+                bestArtifact.bestMatchImage = bestMatch;
+            }
+        }
+
+        if (bestArtifact) {
+            return res.status(200).json({
+                artifact: bestArtifact,
+                similarity: highestSimilarity,
+                message: 'Best matching artifact found'
+            });
+        }
+
+        res.status(404).json({ message: 'No matching artifact found' });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+};
