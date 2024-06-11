@@ -35,7 +35,8 @@ exports.addEvent = catchAsync(async(req,res,next)=>{
         eDate:req.body.eDate,
         location:{
             coordinates:[lat,lng]
-        }
+        },
+        category:req.body.category
     });
 
     res.status(201).json({

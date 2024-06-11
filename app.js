@@ -27,6 +27,7 @@ app.use(express.static(path.join(__dirname, 'test/view')))
 
 app.use('/placeImages', express.static(path.join(__dirname, 'public/img/places')));
 app.use('/userImages', express.static(path.join(__dirname, 'public/img/users')));
+app.use('/artifacsImages', express.static(path.join(__dirname, 'public/img/Artifacss')));
 app.set('trust proxy', true)
 app.use(mongoSanitize())
 app.use(xss())
