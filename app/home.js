@@ -122,7 +122,6 @@ exports.getLandMark = catchAsync(async (req,res,next)=>{
 
 exports.getArtifacts = catchAsync(async(req,res,next) =>{
     const artifacs = await Artifacs.find().select('name images museum').populate('museum','name');
-    console.log(artifacs);
     res.status(200).json({
         status:'success',
         artifacs:filteredartifacs(artifacs,await isFavArtifacs(artifacs,req.user.id))
