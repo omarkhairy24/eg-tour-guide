@@ -18,13 +18,16 @@ exports.upload = multer({ storage });
 
 let model;
 
-const loadModel = mobilenet.load().then(loadedModel => {
-    model = loadedModel;
-    console.log('Model loaded successfully');
-}).catch(err => {
-    console.error('Failed to load model', err);
-    process.exit(1);
-});
+const loadModel = async () => {
+    try {
+        model = await mobilenet.load();
+        console.log('Model loaded successfully');
+    } catch (err) {
+        console.error('Failed to load model', err);
+        process.exit(1);
+    }
+};
+loadModel();
 
 const loadImage = (imagePath) => {
     const buf = fs.readFileSync(imagePath);
@@ -33,7 +36,7 @@ const loadImage = (imagePath) => {
 };
 
 const extractFeatures = async (imageTensor) => {
-    await loadModel;
+    loadModel;
     const activation = model.infer(imageTensor, 'conv_preds');
     const features = activation.dataSync();
     imageTensor.dispose();
@@ -48,11 +51,19 @@ const cosineSimilarity = (vecA, vecB) => {
     return dotProduct / (normA * normB);
 };
 
+const artifactFeaturesCache = new Map();
+
+const extractAndCacheFeatures = async (imagePath) => {
+    const imageTensor = loadImage(imagePath);
+    const features = await extractFeatures(imageTensor);
+    artifactFeaturesCache.set(imagePath, features);
+    return features;
+};
+
+// Usage example within recognizeImage function
 const recognizeImage = async (imagePath, artifactImages) => {
     const imageTensor = loadImage(imagePath);
-    const uploadedImageFeatures = await extractFeatures(imageTensor);
-
-    console.log(`Uploaded image features extracted`);
+    const uploadedImageFeatures = await extractAndCacheFeatures(imagePath);
 
     let bestMatch = null;
     let highestSimilarity = -1;
@@ -64,8 +75,10 @@ const recognizeImage = async (imagePath, artifactImages) => {
             continue;
         }
 
-        const artifactImageTensor = loadImage(artifactImagePath);
-        const artifactImageFeatures = await extractFeatures(artifactImageTensor);
+        let artifactImageFeatures = artifactFeaturesCache.get(artifactImagePath);
+        if (!artifactImageFeatures) {
+            artifactImageFeatures = await extractAndCacheFeatures(artifactImagePath);
+        }
 
         const similarity = cosineSimilarity(uploadedImageFeatures, artifactImageFeatures);
         console.log(`Similarity with ${artifactImagePath}: ${similarity}`);
@@ -74,10 +87,9 @@ const recognizeImage = async (imagePath, artifactImages) => {
             highestSimilarity = similarity;
             bestMatch = artifactImage;
         }
-
-        artifactImageTensor.dispose();
     }
 
+    imageTensor.dispose(); // Dispose uploaded image tensor after loop
     return { bestMatch, highestSimilarity };
 };
 
