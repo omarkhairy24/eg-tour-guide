@@ -37,9 +37,15 @@ exports.getTours = catchAsync(async(req,res,next) =>{
 exports.getTour = catchAsync(async(req,res,next)=>{
     const tour = await Tours.findById(req.params.tourId).populate('reviews places.place','images name');
     let images = []
+    let isSave;
     tour.places.forEach(place =>{
         images.push(place.place.images[0]);
     })
+    const saved = await Fav.findOne({ user: req.user.id, tour: tour._id });
+    
+    if(saved) isSave = true 
+    else isSave = false
+
     res.status(200).json({
         status:'success',
         tour:{
@@ -51,6 +57,7 @@ exports.getTour = catchAsync(async(req,res,next)=>{
             type:tour.type,
             ratingAverage:tour.ratingAverage,
             ratingQuantity:tour.ratingQuantity,
+            saved:isSave,
             reviews:tour.reviews
         }
     })

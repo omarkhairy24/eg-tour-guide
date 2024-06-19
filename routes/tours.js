@@ -4,7 +4,7 @@ const tourController = require('../controllers/tourController');
 
 router.get('/all-tours',authController.protect,tourController.getTours);
 
-router.get('/tour/:tourId',tourController.getTour);
+router.get('/tour/:tourId',authController.protect,tourController.getTour);
 
 router.get('/tour-details/:tourId',tourController.getTourDetails)
 
