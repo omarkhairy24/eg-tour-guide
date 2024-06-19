@@ -6,6 +6,7 @@ const Recommedation = require('../middlewares/recommendation');
 const catchAsync = require('../middlewares/catchAsync');
 const AppError = require('../middlewares/AppError');
 const Artifacs = require('../models/artifacs');
+const SearchHistory = require('../models/searchHistory');
 
 const filteredPlaces = (places,fav) =>{
     return places.map((place,i) =>({
@@ -54,20 +55,21 @@ function generateSearchFields(fields, searchQ) {
 }
 
 exports.getHome = catchAsync(async(req,res)=>{
-    const [event,recommendation , topPlaces ,places,history,recentAdded] = await Promise.all([
+
+    const [event,recommendation , topPlaces ,places,historyPlaces,recentAdded] = await Promise.all([
         Events.find().select('name images'),
         Recommedation(req,res),
         Places.find().sort({ratingAverage:-1}).limit(10).select('name images govName ratingAverage ratingQuantity'),
         Places.find().limit(10).select('name images govName ratingAverage ratingQuantity updatedAt'),
-        History.findOne({user:req.user.id}).populate('place').select('place'),
+        History.findOne({user:req.user.id}).populate('place').select('place').distinct('place'),
         Places.find().sort({'_id':-1}).limit(10).select('name images govName ratingAverage ratingQuantity updatedAt')
     ])
 
-    const [recommendationFavStatuses,topPlacesFavStatuses,placesFavStatuses,historyFavStatuses,recentlyAdded] = await Promise.all([
+    const [recommendationFavStatuses,topPlacesFavStatuses,placesFavStatuses,history,recentlyAdded] = await Promise.all([
         isFav(recommendation, req.user.id),
         isFav(topPlaces, req.user.id),
         isFav(places, req.user.id),
-        history ? isFav(history.place, req.user.id) : [],
+        Places.find({_id:historyPlaces}).sort({'_id':-1}),
         isFav(recentAdded,req.user.id)
     ])
 
@@ -77,7 +79,7 @@ exports.getHome = catchAsync(async(req,res)=>{
         topRated: filteredPlaces(topPlaces, topPlacesFavStatuses),
         explore: filteredPlaces(places, placesFavStatuses),
         recentlyAdded:filteredPlaces(recentAdded,recentlyAdded),
-        recentlyViewed: history ? filteredPlaces(history.place, historyFavStatuses) : []
+        recentlyViewed: history ? filteredPlaces(history, await isFav(history,req.user.id)) : []
     })
 })
 
@@ -100,7 +102,7 @@ exports.getLandMark = catchAsync(async (req,res,next)=>{
     if (saved) isSaved = true
     else isSaved = false ;
 
-    const relatedPlaces = await Places.find({category:place.category}).limit(5)
+    const relatedPlaces = await Places.find({category:place.category,_id:{$ne:place._id}}).limit(5)
 
     res.status(200).json({
         status:'success',
@@ -154,6 +156,7 @@ exports.getArtifac = catchAsync(async(req,res,next) =>{
 
 exports.search = catchAsync(async(req,res,next)=>{
     let searchQ = req.query.searchQ
+    await SearchHistory.create({search:searchQ,user:req.user.id});
     let resultField = generateSearchFields(['name' , 'category' , 'govName'],searchQ)
     const placeResult = await Places.find({$or:resultField});
     const artifacResult = await Artifacs.find({$or:resultField}).populate('museum');
@@ -164,4 +167,27 @@ exports.search = catchAsync(async(req,res,next)=>{
             artifacs :filteredartifacs(artifacResult,await isFavArtifacs(artifacResult))
         }
     })  
+});
+
+
+exports.getSearchHistory = catchAsync(async(req,res,next)=>{
+    const searchHistory = await SearchHistory.find({user:req.user.id})
+    const search = searchHistory.map(sh =>{
+        return {
+            _id:sh._id,
+            search:sh.search
+        }
+    })
+    res.status(200).json({
+        status:'success',
+        search
+    })
+})
+
+exports.deleteSearchHistory = catchAsync(async(req,res,next) =>{
+    await SearchHistory.deleteMany({user:req.user.id})
+    res.status(200).json({
+        status:'success',
+        
+    })
 })
