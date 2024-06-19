@@ -26,7 +26,8 @@ const tourSchema = new mongoose.Schema({
         }
     }],
     type:{
-        type:String
+        type:String,
+        enum:['Cultural', 'Historical', 'Entertainment','Religion','Adventure','Ecotourism']
     },
     description:{
         type:String

@@ -46,6 +46,8 @@ exports.getTour = catchAsync(async(req,res,next)=>{
     if(saved) isSave = true 
     else isSave = false
 
+    const relatedTours = await Tours.find({type:tour.type,_id:{$ne:tour._id}}).populate('places.place').limit(5)
+
     res.status(200).json({
         status:'success',
         tour:{
@@ -59,7 +61,8 @@ exports.getTour = catchAsync(async(req,res,next)=>{
             ratingQuantity:tour.ratingQuantity,
             saved:isSave,
             reviews:tour.reviews
-        }
+        },
+        relatedTours:filteredtours(relatedTours,await isFav(relatedTours,req.user.id))
     })
 })
 
