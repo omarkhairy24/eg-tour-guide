@@ -37,9 +37,9 @@ const isFav = async (places, userId) => {
     return favStatuses;
 }
 
-const isFavArtifacs = async (places, userId) => {
-    const favStatuses = await Promise.all(places.map(async (place) => {
-        const saved = await Fav.findOne({ user: userId, artifacs: place._id });
+const isFavArtifacs = async (aritfacs, userId) => {
+    const favStatuses = await Promise.all(aritfacs.map(async (artifac) => {
+        const saved = await Fav.findOne({ user: userId, artifacs: artifac._id });
         return !!saved;
     }));
     return favStatuses;
@@ -156,7 +156,7 @@ exports.search = catchAsync(async(req,res,next)=>{
     let searchQ = req.query.searchQ
     let resultField = generateSearchFields(['name' , 'category' , 'govName'],searchQ)
     const placeResult = await Places.find({$or:resultField});
-    const artifacResult = await Artifacs.find({$or:resultField});
+    const artifacResult = await Artifacs.find({$or:resultField}).populate('museum');
     res.status(200).json({
         status:'success',
         data:{

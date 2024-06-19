@@ -8,4 +8,6 @@ router.post('/add-fav-place/:placeId',authController.protect,authController.rest
 
 router.post('/add-fav-artifacs/:artifacId',authController.protect,authController.restrictTo('user'),favController.addFavArtifacs);
 
+router.post('/add-fav-tour/:tourId',authController.protect,authController.restrictTo('user'),favController.addFavTour);
+
 module.exports = router

@@ -13,6 +13,10 @@ const favSchema = new mongoose.Schema({
     artifacs:{
         type:mongoose.Schema.ObjectId,
         ref:'Artifacs'
+    },
+    tour:{
+        type:mongoose.Schema.ObjectId,
+        ref:'Tours'
     }
 });
 

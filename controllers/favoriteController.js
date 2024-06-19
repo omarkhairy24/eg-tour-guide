@@ -47,3 +47,22 @@ exports.addFavArtifacs = catchAsync(async(req,res,next)=>{
         Fav
     })
 });
+
+exports.addFavTour = catchAsync(async(req,res,next)=>{
+    let Fav;
+    const isFav = await Favorite.findOne({user:req.user.id,tour:req.params.tourId});
+    if(isFav){
+        await Favorite.findOneAndDelete({user:req.user.id,tour:req.params.tourId});
+    }
+    else{
+        Fav = await Favorite.create({
+            user:req.user.id,
+            tour:req.params.tourId
+        })
+    }
+
+    res.status(200).json({
+        status:'success',
+        Fav
+    })
+});

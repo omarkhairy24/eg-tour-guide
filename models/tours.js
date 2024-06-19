@@ -5,15 +5,32 @@ const tourSchema = new mongoose.Schema({
         type:String,
         required:true
     },
+    duration:{
+        type:Number,
+        required:true
+    },
+    startDate:{
+        type:Date
+    },
     user:{
         type:mongoose.Schema.ObjectId,
         ref:'User'
     },
     places:[{
-        type:mongoose.Schema.ObjectId,
-        ref:'Places',
-        required:true
+        place:{
+            type:mongoose.Schema.ObjectId,
+            ref:'Places',
+        },
+        day:{
+            type: Number
+        }
     }],
+    type:{
+        type:String
+    },
+    description:{
+        type:String
+    },
     ratingAverage:{
         type:Number,
         default:0,
