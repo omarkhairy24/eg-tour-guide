@@ -26,6 +26,7 @@ const filteredartifacs = (places,fav) =>{
         name:place.name,
         image:place.images[0],
         museumName:place.museum.name,
+        type:place.type,
         saved:fav[i]
     }))
 }
@@ -115,6 +116,8 @@ exports.getLandMark = catchAsync(async (req,res,next)=>{
             location:place.location,
             type : `${place.category},${place.type}`,
             saved:isSaved,
+            ratingAverage:place.ratingAverage,
+            ratingQuantity:place.ratingQuantity,
             reviews:place.reviews,
             model:place.vrModel
         },
@@ -123,7 +126,8 @@ exports.getLandMark = catchAsync(async (req,res,next)=>{
 })
 
 exports.getArtifacts = catchAsync(async(req,res,next) =>{
-    const artifacs = await Artifacs.find().select('name images museum').populate('museum','name');
+    const artifacs = await Artifacs.find().select('name images museum type').populate('museum','name');
+    console.log(await Artifacs.find().distinct('material'));
     res.status(200).json({
         status:'success',
         artifacs:filteredartifacs(artifacs,await isFavArtifacs(artifacs,req.user.id))
@@ -139,7 +143,7 @@ exports.getArtifac = catchAsync(async(req,res,next) =>{
     if (saved) isSaved = true
     else isSaved = false ;
 
-    const relatedArtifacs = await Artifacs.find({'_id':{$ne:artifac._id}}).limit(5)
+    const relatedArtifacs = await Artifacs.find({'_id':{$ne:artifac._id},type:artifac.type}).limit(5)
     res.status(200).json({
         status:'success',
         artifac: {
@@ -148,6 +152,8 @@ exports.getArtifac = catchAsync(async(req,res,next) =>{
         museum: artifac.museum,
         images:artifac.images,
         description:artifac.description,
+        type:artifac.type,
+        material:artifac.material,
         saved:isSaved
     },
         relatedArtifacs:filteredartifacs(relatedArtifacs,await isFavArtifacs(relatedArtifacs))

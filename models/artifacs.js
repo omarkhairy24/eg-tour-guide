@@ -14,6 +14,14 @@ const artifacsSchema = new mongoose.Schema({
     description:{
         type:String,
         required:true
+    },
+    material:{
+        type:String,
+        required:true
+    },
+    type:{
+        type:String,
+        required:true
     }
 },{
     toJSON:{virtuals:true},

@@ -38,7 +38,9 @@ exports.createArtifacs = catchAsync(async(req,res,next)=>{
         name:req.body.name,
         images:images,
         museum:req.body.museum,
-        description:req.body.description
+        description:req.body.description,
+        material:req.body.material,
+        type:req.body.type
      });
      console.log(artifacs);
      res.status(201).json({
@@ -57,6 +59,8 @@ exports.updateArtifacs = catchAsync( async (req,res,next)=>{
         name:req.body.name,
         museum:req.body.govName,
         description:req.body.description,
+        material:req.body.material,
+        type:req.body.type
     }
 
     let images;
