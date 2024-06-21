@@ -22,7 +22,8 @@ const artifacsSchema = new mongoose.Schema({
     type:{
         type:String,
         required:true
-    }
+    },
+    ar:String
 },{
     toJSON:{virtuals:true},
     toObject:{virtuals:true}

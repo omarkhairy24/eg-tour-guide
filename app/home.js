@@ -171,6 +171,7 @@ exports.getArtifac = catchAsync(async(req,res,next) =>{
         images:artifac.images,
         description:artifac.description,
         type:artifac.type,
+        ar:artifac.ar,
         material:artifac.material,
         saved:isSaved
     },
