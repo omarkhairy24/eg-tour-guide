@@ -14,6 +14,7 @@ const filteredPlaces = (places,fav) =>{
         name:place.name,
         image:place.images[0],
         govName:place.govName,
+        category:place.category,
         ratingAverage:place.ratingAverage,
         ratingQuantity:place.ratingQuantity,
         saved:fav[i]
@@ -27,6 +28,7 @@ const filteredartifacs = (places,fav) =>{
         image:place.images[0],
         museumName:place.museum.name,
         type:place.type,
+        material:place.material,
         saved:fav[i]
     }))
 }
@@ -60,10 +62,10 @@ exports.getHome = catchAsync(async(req,res)=>{
     const [event,recommendation , topPlaces ,places,historyPlaces,recentAdded] = await Promise.all([
         Events.find().select('name images'),
         Recommedation(req,res),
-        Places.find().sort({ratingAverage:-1}).limit(10).select('name images govName ratingAverage ratingQuantity'),
-        Places.find().limit(10).select('name images govName ratingAverage ratingQuantity updatedAt'),
+        Places.find().sort({ratingAverage:-1}).limit(10).select('name images govName category ratingAverage ratingQuantity'),
+        Places.find().limit(10).select('name images govName ratingAverage ratingQuantity category updatedAt'),
         History.findOne({user:req.user.id}).populate('place').select('place').distinct('place'),
-        Places.find().sort({'_id':-1}).limit(10).select('name images govName ratingAverage ratingQuantity updatedAt')
+        Places.find().sort({'_id':-1}).limit(10).select('name images govName category ratingAverage ratingQuantity updatedAt')
     ])
 
     const [recommendationFavStatuses,topPlacesFavStatuses,placesFavStatuses,history,recentlyAdded] = await Promise.all([
@@ -85,7 +87,7 @@ exports.getHome = catchAsync(async(req,res)=>{
 })
 
 exports.getLandMarks = catchAsync(async (req,res,next) =>{
-    const places = await Places.find().select('name images govName ratingAverage ratingQuantity').lean();
+    const places = await Places.find().select('name images govName category ratingAverage ratingQuantity').lean();
     const isFavPlaces = await isFav(places,req.user.id)
 
     res.status(200).json({
@@ -143,8 +145,7 @@ exports.getLandMark = catchAsync(async (req,res,next)=>{
 })
 
 exports.getArtifacts = catchAsync(async(req,res,next) =>{
-    const artifacs = await Artifacs.find().select('name images museum type').populate('museum','name');
-    console.log(await Artifacs.find().distinct('material'));
+    const artifacs = await Artifacs.find().select('name images material museum type').populate('museum','name');
     res.status(200).json({
         status:'success',
         artifacs:filteredartifacs(artifacs,await isFavArtifacs(artifacs,req.user.id))
@@ -161,7 +162,6 @@ exports.getArtifac = catchAsync(async(req,res,next) =>{
     else isSaved = false ;
 
     const relatedArtifacs = await Artifacs.find({'_id':{$ne:artifac._id},type:artifac.type}).populate('museum','name').limit(5)
-    
     res.status(200).json({
         status:'success',
         artifac: {
@@ -212,6 +212,6 @@ exports.deleteSearchHistory = catchAsync(async(req,res,next) =>{
     await SearchHistory.deleteMany({user:req.user.id})
     res.status(200).json({
         status:'success',
-        
+
     })
 })
