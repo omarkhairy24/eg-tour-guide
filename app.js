@@ -18,7 +18,6 @@ const tourRoute = require('./routes/tours');
 const artifacsRoute = require('./routes/artifacs');
 const appRoute = require('./routes/app');
 const globalErrorHandlingMiddleware = require('./controllers/globalHandlerError')
-const googlePassport = require('./middlewares/passportSetup')
 /////////////////////////////////////
 // Middlewares
 app.use(express.json({ limit: '10kb' }))
@@ -27,6 +26,7 @@ app.use(express.static(path.join(__dirname, 'test/view')))
 
 app.use('/placeImages', express.static(path.join(__dirname, 'public/img/places')));
 app.use('/userImages', express.static(path.join(__dirname, 'public/img/users')));
+app.use('/ar',express.static(path.join(__dirname,'public/ar')));
 app.use('/artifacsImages', express.static(path.join(__dirname, 'public/img/Artifacss')));
 app.set('trust proxy', true)
 app.use(mongoSanitize())
