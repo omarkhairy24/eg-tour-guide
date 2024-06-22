@@ -185,22 +185,11 @@ exports.search = catchAsync(async(req,res,next)=>{
     let resultField = generateSearchFields(['name' , 'category' , 'govName'],searchQ)
     const placeResult = await Places.find({ $or: resultField });
     const artifacResult = await Artifacs.find({ $or: resultField }).populate('museum');
-
-    const filteredPlaceResults = filteredPlaces(placeResult, await isFav(placeResult)).map(place => ({
-        ...place,
-        type: 'Place'
-    }));
-
-    const filteredArtifacResults = filteredartifacs(artifacResult, await isFavArtifacs(artifacResult)).map(artifac => ({
-        ...artifac,
-        type: 'Artifac'
-    }));
-
     res.status(200).json({
         status: 'success',
         data: {
-            places: filteredPlaceResults,
-            artifacs: filteredArtifacResults
+            places: filteredPlaces(placeResult ,await isFav(placeResult)),
+            artifacs: filteredartifacs(artifacResult,await isFavArtifacs(artifacResult))
         }
     }); 
 });
