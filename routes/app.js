@@ -17,7 +17,7 @@ router.get('/artifac/:artifacId',authController.protect,appController.getArtifac
 
 router.get('/search',authController.protect,appController.search);
 
-router.get('/rec',arti.upload.single('photo') , arti.recognize);
+router.post('/rec',arti.upload.single('photo') , arti.recognize);
 
 router.delete('/delete-search-history',authController.protect,appController.deleteSearchHistory);
 

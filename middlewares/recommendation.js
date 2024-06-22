@@ -18,6 +18,8 @@ function createFeatureVector(place) {
     return [...categoryVector, ...typeVector, ...ratingVector];
 }
 
+// create map here
+
 async function Recommedation(req, res) {
     try {
         // Fetch user history and all places in parallel
@@ -36,6 +38,7 @@ async function Recommedation(req, res) {
         const visitedFeatureVectors = visitedPlaces.map(createFeatureVector);
 
         // Compute feature vectors for all places once
+        // loop over all places and for each try to retrieve features from map else extract and chache them
         const allFeatureVectors = allPlaces.map(createFeatureVector);
 
         // Compute similarity scores

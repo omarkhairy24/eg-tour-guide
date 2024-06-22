@@ -18,7 +18,7 @@ exports.upload = multer({ storage });
 
 let model;
 
-const loadModel = async () => {
+const loadModel = async () => { // Mobilenet is a pre-trained convolutional neural network (CNN) model
     try {
         model = await mobilenet.load();
         console.log('Model loaded successfully');
@@ -29,13 +29,13 @@ const loadModel = async () => {
 };
 loadModel();
 
-const loadImage = (imagePath) => {
+const loadImage = (imagePath) => { // input: image path -> load image and create tensor
     const buf = fs.readFileSync(imagePath);
-    const tensor = tf.node.decodeImage(buf, 3);
+    const tensor = tf.node.decodeImage(buf, 3); // 3 channels for rgb
     return tensor;
 };
 
-const extractFeatures = async (imageTensor) => {
+const extractFeatures = async (imageTensor) => { // use pre-trained model to extract features from the image
     loadModel;
     const activation = model.infer(imageTensor, 'conv_preds');
     const features = activation.dataSync();
@@ -44,6 +44,10 @@ const extractFeatures = async (imageTensor) => {
     return features;
 };
 
+/*
+angle between two vectors: { 0 -> identical } { 90 ->  }
+vecA and vecB are the features of the two images
+*/
 const cosineSimilarity = (vecA, vecB) => {
     const dotProduct = vecA.reduce((sum, a, idx) => sum + a * vecB[idx], 0);
     const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
@@ -51,6 +55,7 @@ const cosineSimilarity = (vecA, vecB) => {
     return dotProduct / (normA * normB);
 };
 
+// for chaching images paths with the correspoding image features
 const artifactFeaturesCache = new Map();
 
 const extractAndCacheFeatures = async (imagePath) => {
@@ -66,7 +71,7 @@ const recognizeImage = async (imagePath, artifactImages) => {
     const uploadedImageFeatures = await extractAndCacheFeatures(imagePath);
 
     let bestMatch = null;
-    let highestSimilarity = -1;
+    let highestSimilarity = -1; // cos range between -1 and 1
 
     for (const artifactImage of artifactImages) {
         const artifactImagePath = path.join(__dirname, artifactImage);
