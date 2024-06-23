@@ -23,7 +23,15 @@ const favSchema = new mongoose.Schema({
 favSchema.index({ user: 1, place: 1, artifacs: 1, tour: 1 }, { unique: true });
 
 favSchema.pre(/^find/, function (next) {
-	this.populate('place artifacs');
+	this.populate({
+		path:'place',
+		select:'name images govName ratingAverage ratingQuantity category'
+	}).populate({
+		path:'artifacs',
+		select:'name images type museum'
+	}).populate({
+		path:'tour'
+	});
 	next();
 });
 

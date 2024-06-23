@@ -29,5 +29,12 @@ const artifacsSchema = new mongoose.Schema({
     toObject:{virtuals:true}
 });
 
+artifacsSchema.pre(/^find/, function (next) {
+	this.populate({
+		path:'museum',
+		select:'name'
+    })
+	next();
+});
 
 module.exports = mongoose.model('Artifacs',artifacsSchema);

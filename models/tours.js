@@ -5,10 +5,6 @@ const tourSchema = new mongoose.Schema({
         type:String,
         required:true
     },
-    duration:{
-        type:Number,
-        required:true
-    },
     startDate:{
         type:Date
     },
@@ -21,16 +17,15 @@ const tourSchema = new mongoose.Schema({
             type:mongoose.Schema.ObjectId,
             ref:'Places',
         },
+        time:Number,
         day:{
-            type: Number
+            type:Number,
+            default:1
         }
     }],
-    type:{
-        type:String,
-        enum:['Cultural', 'Historical', 'Entertainment','Religion','Adventure','Ecotourism']
-    },
     description:{
-        type:String
+        type:String,
+        required:true
     },
     ratingAverage:{
         type:Number,
@@ -58,7 +53,10 @@ tourSchema.pre(/^find/,function(next){
     this.populate({
         path:'user',
         select:'username photo'
-    }).populate('places')
+    }).populate({
+        path:'places.place',
+        select:'images'
+    })
     next()
 })
 

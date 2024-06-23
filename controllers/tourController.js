@@ -2,7 +2,7 @@ const AppError = require('../middlewares/AppError');
 const catchAsync = require('../middlewares/catchAsync');
 const Tours = require('../models/tours');
 const User = require('../models/users');
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 const Fav = require('../models/favoritePlace');
 
 const filteredtours = (tours, fav) => {
@@ -28,7 +28,7 @@ const isFav = async (tours, userId) => {
 };
 
 exports.getTours = catchAsync(async (req, res, next) => {
-	const tours = await Tours.find().populate('places.place', 'images').lean();
+	const tours = await Tours.find().lean();
 	res.status(200).json({
 		status: 'success',
 		tours: filteredtours(tours, await isFav(tours, req.user.id)),
@@ -36,10 +36,7 @@ exports.getTours = catchAsync(async (req, res, next) => {
 });
 
 exports.getTour = catchAsync(async (req, res, next) => {
-	const tour = await Tours.findById(req.params.tourId).populate(
-		'reviews places.place',
-		'images name'
-	);
+	const tour = await Tours.findById(req.params.tourId).populate('reviews');
 	let images = [];
 	let isSave;
 	tour.places.forEach((place) => {
@@ -53,9 +50,7 @@ exports.getTour = catchAsync(async (req, res, next) => {
 	const relatedTours = await Tours.find({
 		type: tour.type,
 		_id: { $ne: tour._id },
-	})
-		.populate('places.place')
-		.limit(5);
+	}).limit(5);
 
 	res.status(200).json({
 		status: 'success',
@@ -65,7 +60,6 @@ exports.getTour = catchAsync(async (req, res, next) => {
 			images: images,
 			description: tour.description,
 			duration: tour.duration,
-			type: tour.type,
 			ratingAverage: tour.ratingAverage,
 			ratingQuantity: tour.ratingQuantity,
 			saved: isSave,
@@ -80,6 +74,7 @@ exports.getTour = catchAsync(async (req, res, next) => {
 
 exports.getTourDetails = catchAsync(async (req, res, next) => {
 	const tourId = new mongoose.Types.ObjectId(req.params.tourId);
+	const tourInfo = await Tours.findById(req.params.tourId)
 	const tour = await Tours.aggregate([
 		{ $match: { _id: tourId } },
 		{ $unwind: '$places' },
@@ -95,21 +90,36 @@ exports.getTourDetails = catchAsync(async (req, res, next) => {
 		{
 			$group: {
 				_id: '$places.day',
-				places: { $push: '$placeDetails' },
+				places: {
+					$push: {
+						placeDetails: {
+							_id: '$placeDetails._id',
+							name: '$placeDetails.name',
+							govNAme: '$placeDetails.govName',
+							images: '$placeDetails.images',
+							ratingAverage:'$placeDetails.ratingAverage',
+							ratingQuantity:'$placeDetails.ratingQuantity'
+						},
+						time: '$places.time'
+					}
+				},
 			},
 		},
 		{
 			$project: {
 				_id: 0,
 				day: '$_id',
-				places: 1,
+				places: 1
 			},
 		},
 		{ $sort: { day: 1 } },
 	]);
 
+	console.log(tour);
 	res.status(200).json({
 		status: 'success',
+		name:tourInfo.name,
+		startDate:tourInfo.startDate || null,
 		details: tour,
 	});
 });
@@ -117,12 +127,13 @@ exports.getTourDetails = catchAsync(async (req, res, next) => {
 exports.createTour = catchAsync(async (req, res, next) => {
 	const data = {
 		name: req.body.name,
-		duration: req.body.duration,
+		description: req.body.description,
 	};
 	const user = await User.findById(req.user.id).select('+role');
 	if (user.role === 'user') {
 		data.user = user._id;
 	}
+
 	const tour = await Tours.create(data);
 	res.status(200).json({
 		status: 'success',
@@ -131,7 +142,11 @@ exports.createTour = catchAsync(async (req, res, next) => {
 });
 
 exports.addPlacesToTour = catchAsync(async (req, res, next) => {
-	let tour = await Tours.findById(req.params.tourId);
+	const [tour , places] = await Promise.all([
+		Tours.findById(req.params.tourId),
+		Tours.find().select('places')
+	])
+
 	if (!tour) {
 		return next(new AppError('tour not found', 404));
 	}
@@ -146,15 +161,26 @@ exports.addPlacesToTour = catchAsync(async (req, res, next) => {
 
 	const data = {
 		place: req.body.placeId,
-		day: req.body.day,
+		time: req.body.time,
 	};
 
-	if (req.body.day > tour.duration)
-		return res.status(400).json({
-			message: 'Day must be less than or equal to the duration of the tour',
-		});
-	tour.places.push(data);
+	let time = 0;
+	let day;
 
+	places.map(place =>{
+		place.places.map(p =>{
+			time += p.time
+			day = p.day
+		})
+	})
+
+	time += data.time
+
+	if (time > 12){
+		data.day = day + 1
+	} 
+
+	tour.places.push(data);
 	await tour.save();
 
 	res.status(200).json({

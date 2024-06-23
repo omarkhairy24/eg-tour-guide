@@ -120,7 +120,7 @@ exports.getLandMark = catchAsync(async (req,res,next)=>{
 
     const [relatedPlaces,artifacs] = await Promise.all([
         Places.find({category:place.category,_id:{$ne:place._id}}).limit(5).lean(),
-        Artifacs.find({museum:place._id}).limit(5).populate('museum','name').lean()
+        Artifacs.find({museum:place._id}).limit(5).lean()
     ])
 
     res.status(200).json({
@@ -145,7 +145,7 @@ exports.getLandMark = catchAsync(async (req,res,next)=>{
 })
 
 exports.getArtifacts = catchAsync(async(req,res,next) =>{
-    const artifacs = await Artifacs.find().select('name images material museum type').populate('museum','name');
+    const artifacs = await Artifacs.find().select('name images material museum type')
     res.status(200).json({
         status:'success',
         artifacs:filteredartifacs(artifacs,await isFavArtifacs(artifacs,req.user.id))
@@ -154,14 +154,14 @@ exports.getArtifacts = catchAsync(async(req,res,next) =>{
 
 
 exports.getArtifac = catchAsync(async(req,res,next) =>{
-    const artifac = await Artifacs.findById(req.params.artifacId).populate('museum','name')
+    const artifac = await Artifacs.findById(req.params.artifacId)
     if(!artifac) return next(new AppError('not found',404));
     let isSaved;
     const saved = await Fav.findOne({user:req.user.id,artifacs:artifac._id})
     if (saved) isSaved = true
     else isSaved = false ;
 
-    const relatedArtifacs = await Artifacs.find({'_id':{$ne:artifac._id},type:artifac.type}).populate('museum','name').limit(5)
+    const relatedArtifacs = await Artifacs.find({'_id':{$ne:artifac._id},type:artifac.type}).limit(5)
     res.status(200).json({
         status:'success',
         artifac: {
@@ -188,8 +188,8 @@ exports.search = catchAsync(async(req,res,next)=>{
     res.status(200).json({
         status: 'success',
         data: {
-            places: filteredPlaces(placeResult ,await isFav(placeResult)),
-            artifacs: filteredartifacs(artifacResult,await isFavArtifacs(artifacResult))
+            places: filteredPlaces(placeResult ,await isFav(placeResult,req.user.id) ),
+            artifacs: filteredartifacs(artifacResult,await isFavArtifacs(artifacResult),req.user.id)
         }
     }); 
 });
@@ -216,3 +216,8 @@ exports.deleteSearchHistory = catchAsync(async(req,res,next) =>{
 
     })
 })
+
+exports.isFav = isFav
+exports.filteredPlaces = filteredPlaces
+exports.filteredartifacs = filteredartifacs
+exports.isFavArtifacs = isFavArtifacs
