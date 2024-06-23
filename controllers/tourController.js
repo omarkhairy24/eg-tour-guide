@@ -28,7 +28,7 @@ const isFav = async (tours, userId) => {
 };
 
 exports.getTours = catchAsync(async (req, res, next) => {
-	const tours = await Tours.find().lean();
+	const tours = await Tours.find({user:null}).lean();
 	res.status(200).json({
 		status: 'success',
 		tours: filteredtours(tours, await isFav(tours, req.user.id)),
@@ -47,10 +47,17 @@ exports.getTour = catchAsync(async (req, res, next) => {
 	if (saved) isSave = true;
 	else isSave = false;
 
+	const duration = Math.max(...tour.places.map(place => place.day));
+
 	const relatedTours = await Tours.find({
 		type: tour.type,
 		_id: { $ne: tour._id },
 	}).limit(5);
+
+
+	if(tour.user) {
+		tour.type = null
+	}
 
 	res.status(200).json({
 		status: 'success',
@@ -59,9 +66,10 @@ exports.getTour = catchAsync(async (req, res, next) => {
 			name: tour.name,
 			images: images,
 			description: tour.description,
-			duration: tour.duration,
+			duration: duration,
 			ratingAverage: tour.ratingAverage,
 			ratingQuantity: tour.ratingQuantity,
+			type:tour.type,
 			saved: isSave,
 			reviews: tour.reviews,
 		},
@@ -115,7 +123,6 @@ exports.getTourDetails = catchAsync(async (req, res, next) => {
 		{ $sort: { day: 1 } },
 	]);
 
-	console.log(tour);
 	res.status(200).json({
 		status: 'success',
 		name:tourInfo.name,
@@ -129,6 +136,7 @@ exports.createTour = catchAsync(async (req, res, next) => {
 		name: req.body.name,
 		description: req.body.description,
 	};
+
 	const user = await User.findById(req.user.id).select('+role');
 	if (user.role === 'user') {
 		data.user = user._id;
@@ -144,19 +152,20 @@ exports.createTour = catchAsync(async (req, res, next) => {
 exports.addPlacesToTour = catchAsync(async (req, res, next) => {
 	const [tour , places] = await Promise.all([
 		Tours.findById(req.params.tourId),
-		Tours.find().select('places')
+		Tours.findById(req.params.tourId).select('places')
 	])
 
 	if (!tour) {
 		return next(new AppError('tour not found', 404));
 	}
 
-	const user = await User.findById(req.user.id).select('+role');
-
 	if (tour.user) {
+		const user = await User.findById(req.user.id).select('+role');
 		if (tour.user._id.toString() !== user._id.toString()) {
 			return next(new AppError('not allowed', 403));
 		}
+		tour.reviews = undefined
+		tour.type = undefined
 	}
 
 	const data = {
@@ -164,21 +173,26 @@ exports.addPlacesToTour = catchAsync(async (req, res, next) => {
 		time: req.body.time,
 	};
 
-	let time = 0;
-	let day;
+	let maxDay = 1;
+	let dayTimes = {};
 
-	places.map(place =>{
-		place.places.map(p =>{
-			time += p.time
-			day = p.day
-		})
-	})
+	places.places.forEach(place => {
+		if (!dayTimes[place.day]) {
+			dayTimes[place.day] = 0;
+		}
+		dayTimes[place.day] += place.time;
+		maxDay = Math.max(maxDay, place.day);
+	});
 
-	time += data.time
+	if (!dayTimes[maxDay]) {
+		dayTimes[maxDay] = 0;
+	}
 
-	if (time > 12){
-		data.day = day + 1
-	} 
+	if (dayTimes[maxDay] + data.time > 12) {
+		data.day = maxDay + 1;
+	} else {
+		data.day = maxDay;
+	}
 
 	tour.places.push(data);
 	await tour.save();
@@ -194,10 +208,9 @@ exports.removePlaceFromTour = catchAsync(async (req, res, next) => {
 	if (!tour) {
 		return next(new AppError('tour not found', 404));
 	}
-
-	const user = await User.findById(req.user.id).select('+role');
-
+	
 	if (tour.user) {
+		const user = await User.findById(req.user.id).select('+role');
 		if (tour.user._id.toString() !== user._id.toString()) {
 			return next(new AppError('not allowed', 403));
 		}
@@ -218,13 +231,15 @@ exports.updateTourDetails = catchAsync(async (req, res, next) => {
 	if (!tour) {
 		return next(new AppError('tour not found', 404));
 	}
-
-	const user = await User.findById(req.user.id).select('+role');
-
+	
 	if (tour.user) {
+		const user = await User.findById(req.user.id).select('+role');
 		if (tour.user._id.toString() !== user._id.toString()) {
 			return next(new AppError('not allowed', 403));
 		}
+		if(req.body.type) return next(new AppError('not allowed to pass type',403));
+		tour.reviews = undefined
+		tour.type = undefined
 	}
 
 	const data = {
@@ -262,3 +277,23 @@ exports.deleteTour = catchAsync(async (req, res, next) => {
 		message: 'tour deleted successfully',
 	});
 });
+
+exports.getUserTours = catchAsync(async(req,res,next) =>{
+	const tours = await Tours.find({user:req.user.id});
+	tours.map(tour =>{
+		tour.type = undefined
+	})
+	res.status(200).json({
+		status:'success',
+		tours:filteredtours(tours,await isFav(tours,req.user.id))
+	})
+})
+
+exports.getUserTour = catchAsync(async(req,res,next) =>{
+	const tour = await Tours.findOne({_id:req.params.tourId,user:req.user.id})
+	tour.type = undefined
+	res.status(200).json({
+		status:'success',
+		tour
+	})
+})

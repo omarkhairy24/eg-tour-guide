@@ -23,15 +23,13 @@ const eventSchema = new mongoose.Schema({
         },
         coordinates:[Number]
     },
-    eDate:{
-        type:Date,
-        required:true,
-        validate:{
-            validator:function(val){
-                return val > this.sDate
-            },
-            message:'this date is before the start date'
-        }
+    placeName:{
+        type:String,
+        required:true
+    },
+    duration:{
+        type:Number,
+        required:true
     },
     category:{
         type:String,

@@ -32,11 +32,12 @@ exports.addEvent = catchAsync(async(req,res,next)=>{
         description:req.body.description,
         images,
         sDate:req.body.sDate,
-        eDate:req.body.eDate,
+        duration:req.body.duration,
         location:{
             coordinates:[lat,lng]
         },
-        category:req.body.category
+        category:req.body.category,
+        placeName:req.body.placeName
     });
 
     res.status(201).json({
@@ -64,7 +65,8 @@ exports.editEvent = catchAsync(async(req,res,next)=>{
         description:req.body.description,
         images,
         sDate:req.body.sDate,
-        eDate:req.body.eDate
+        duration:req.body.duration,
+        placeName:req.body.placeName
     },{new:true});
 
     res.status(200).json({

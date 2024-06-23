@@ -12,6 +12,10 @@ const tourSchema = new mongoose.Schema({
         type:mongoose.Schema.ObjectId,
         ref:'User'
     },
+    type:{
+        type:String,
+        enum:['Cultural', 'Historical', 'Entertainment','Religion','Adventure','Ecotourism']
+    },
     places:[{
         place:{
             type:mongoose.Schema.ObjectId,

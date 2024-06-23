@@ -216,8 +216,3 @@ exports.deleteSearchHistory = catchAsync(async(req,res,next) =>{
 
     })
 })
-
-exports.isFav = isFav
-exports.filteredPlaces = filteredPlaces
-exports.filteredartifacs = filteredartifacs
-exports.isFavArtifacs = isFavArtifacs

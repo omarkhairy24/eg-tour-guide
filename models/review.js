@@ -31,7 +31,7 @@ const reviewSchema = new mongoose.Schema({
     toObject: { virtuals: true }
 });
 
-reviewSchema.index({ place: 1, user: 1 }, { unique: true });
+reviewSchema.index({ place: 1, user: 1,tour:1 }, { unique: true });
 
 reviewSchema.pre(/^find/, function (next) {
     this.populate({
