@@ -57,6 +57,13 @@ function generateSearchFields(fields, searchQ) {
     ]);
 }
 
+exports.getRecommend = async(req,res)=>{
+    const places = await Recommedation(req,res)
+    res.status(200).json({
+        recommended:filteredPlaces(places,await isFav(places,req.user.id))
+    })
+}
+
 exports.getHome = catchAsync(async(req,res)=>{
 
     const [event,recommendation , topPlaces ,places,historyPlaces,recentAdded] = await Promise.all([

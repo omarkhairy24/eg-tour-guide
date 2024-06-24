@@ -29,7 +29,7 @@ const filteredtours = (tours) => {
 		_id: tour.tour._id,
 		name: tour.tour.name,
 		image: tour.tour.places[0].place.images[0],
-		duration: tour.tour.duration,
+		duration:tour.tour.duration,
 		ratingAverage: tour.tour.ratingAverage,
 		ratingQuantity: tour.tour.ratingQuantity,
 	}));
@@ -41,7 +41,7 @@ exports.getFavorites = catchAsync(async(req,res,nex)=>{
         Favorite.find({user:req.user.id,artifacs:{$ne:null}}).select('artifacs'),
         Favorite.find({user:req.user.id,tour:{$ne:null}}).select('tour'),
     ])
-
+    
     res.status(200).json({
         status:'success',
         places:filteredPlaces(favPlaces),

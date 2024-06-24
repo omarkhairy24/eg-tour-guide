@@ -5,6 +5,8 @@ const arti = require('../artifacRecognition');
 
 router.get('/home' ,authController.protect,appController.getHome);
 
+router.get('/recommend',authController.protect,appController.getRecommend);
+
 router.get('/search-history',authController.protect,appController.getSearchHistory);
 
 router.get('/landmarks',authController.protect,appController.getLandMarks);

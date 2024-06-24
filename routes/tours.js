@@ -6,8 +6,6 @@ router.get('/all-tours',authController.protect,tourController.getTours);
 
 router.get('/user-tours',authController.protect,tourController.getUserTours);
 
-router.get('/user-tour/:tourId',authController.protect,tourController.getUserTour);
-
 router.get('/tour/:tourId',authController.protect,tourController.getTour);
 
 router.get('/tour-details/:tourId',tourController.getTourDetails)

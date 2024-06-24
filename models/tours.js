@@ -8,6 +8,7 @@ const tourSchema = new mongoose.Schema({
     startDate:{
         type:Date
     },
+    duration:Number,
     user:{
         type:mongoose.Schema.ObjectId,
         ref:'User'

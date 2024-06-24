@@ -54,7 +54,6 @@ exports.getTour = catchAsync(async (req, res, next) => {
 		_id: { $ne: tour._id },
 	}).limit(5);
 
-
 	if(tour.user) {
 		tour.type = null
 	}
@@ -197,6 +196,10 @@ exports.addPlacesToTour = catchAsync(async (req, res, next) => {
 	tour.places.push(data);
 	await tour.save();
 
+	tour.duration = Math.max(...tour.places.map(place => place.day));
+
+	await tour.save()
+
 	res.status(200).json({
 		status: 'success',
 		tour,
@@ -286,14 +289,5 @@ exports.getUserTours = catchAsync(async(req,res,next) =>{
 	res.status(200).json({
 		status:'success',
 		tours:filteredtours(tours,await isFav(tours,req.user.id))
-	})
-})
-
-exports.getUserTour = catchAsync(async(req,res,next) =>{
-	const tour = await Tours.findOne({_id:req.params.tourId,user:req.user.id})
-	tour.type = undefined
-	res.status(200).json({
-		status:'success',
-		tour
 	})
 })
