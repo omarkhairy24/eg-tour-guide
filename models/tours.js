@@ -5,9 +5,6 @@ const tourSchema = new mongoose.Schema({
         type:String,
         required:true
     },
-    startDate:{
-        type:Date
-    },
     duration:Number,
     user:{
         type:mongoose.Schema.ObjectId,
