@@ -29,6 +29,7 @@ const filteredartifacs = (places,fav) =>{
         museumName:place.museum.name,
         type:place.type,
         material:place.material,
+        ar:place.ar,
         saved:fav[i]
     }))
 }
@@ -152,7 +153,7 @@ exports.getLandMark = catchAsync(async (req,res,next)=>{
 })
 
 exports.getArtifacts = catchAsync(async(req,res,next) =>{
-    const artifacs = await Artifacs.find().select('name images material museum type')
+    const artifacs = await Artifacs.find().select('name images material museum type').sort({ar:-1})
     res.status(200).json({
         status:'success',
         artifacs:filteredartifacs(artifacs,await isFavArtifacs(artifacs,req.user.id))

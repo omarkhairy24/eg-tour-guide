@@ -174,8 +174,6 @@ exports.addPlacesToTour = catchAsync(async (req, res, next) => {
 
 	let maxDay = 1;
 	let dayTimes = {};
-
-
 	
 	places.places.forEach(place => {
 		if (!dayTimes[place.day]) {
