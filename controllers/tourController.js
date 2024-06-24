@@ -175,6 +175,8 @@ exports.addPlacesToTour = catchAsync(async (req, res, next) => {
 	let maxDay = 1;
 	let dayTimes = {};
 
+
+	
 	places.places.forEach(place => {
 		if (!dayTimes[place.day]) {
 			dayTimes[place.day] = 0;
@@ -182,11 +184,11 @@ exports.addPlacesToTour = catchAsync(async (req, res, next) => {
 		dayTimes[place.day] += place.time;
 		maxDay = Math.max(maxDay, place.day);
 	});
-
+	
 	if (!dayTimes[maxDay]) {
 		dayTimes[maxDay] = 0;
 	}
-
+	
 	if (dayTimes[maxDay] + data.time > 12) {
 		data.day = maxDay + 1;
 	} else {
@@ -201,8 +203,7 @@ exports.addPlacesToTour = catchAsync(async (req, res, next) => {
 	await tour.save()
 
 	res.status(200).json({
-		status: 'success',
-		tour,
+		status: 'success'
 	});
 });
 

@@ -18,7 +18,7 @@ exports.upload = multer({ storage });
 
 let model;
 
-const loadModel = async () => { // Mobilenet is a pre-trained convolutional neural network (CNN) model
+const loadModel = async () => {
     try {
         model = await mobilenet.load();
         console.log('Model loaded successfully');
@@ -29,13 +29,13 @@ const loadModel = async () => { // Mobilenet is a pre-trained convolutional neur
 };
 loadModel();
 
-const loadImage = (imagePath) => { // input: image path -> load image and create tensor
+const loadImage = (imagePath) => {
     const buf = fs.readFileSync(imagePath);
-    const tensor = tf.node.decodeImage(buf, 3); // 3 channels for rgb
+    const tensor = tf.node.decodeImage(buf, 3);
     return tensor;
 };
 
-const extractFeatures = async (imageTensor) => { // use pre-trained model to extract features from the image
+const extractFeatures = async (imageTensor) => {
     loadModel;
     const activation = model.infer(imageTensor, 'conv_preds');
     const features = activation.dataSync();
@@ -44,10 +44,6 @@ const extractFeatures = async (imageTensor) => { // use pre-trained model to ext
     return features;
 };
 
-/*
-angle between two vectors: { 0 -> identical } { 90 ->  }
-vecA and vecB are the features of the two images
-*/
 const cosineSimilarity = (vecA, vecB) => {
     const dotProduct = vecA.reduce((sum, a, idx) => sum + a * vecB[idx], 0);
     const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
@@ -55,7 +51,6 @@ const cosineSimilarity = (vecA, vecB) => {
     return dotProduct / (normA * normB);
 };
 
-// for chaching images paths with the correspoding image features
 const artifactFeaturesCache = new Map();
 
 const extractAndCacheFeatures = async (imagePath) => {
@@ -65,13 +60,12 @@ const extractAndCacheFeatures = async (imagePath) => {
     return features;
 };
 
-// Usage example within recognizeImage function
 const recognizeImage = async (imagePath, artifactImages) => {
     const imageTensor = loadImage(imagePath);
     const uploadedImageFeatures = await extractAndCacheFeatures(imagePath);
 
     let bestMatch = null;
-    let highestSimilarity = -1; // cos range between -1 and 1
+    let highestSimilarity = -1;
 
     for (const artifactImage of artifactImages) {
         const artifactImagePath = path.join(__dirname, artifactImage);
@@ -94,7 +88,7 @@ const recognizeImage = async (imagePath, artifactImages) => {
         }
     }
 
-    imageTensor.dispose(); // Dispose uploaded image tensor after loop
+    imageTensor.dispose();
     return { bestMatch, highestSimilarity };
 };
 

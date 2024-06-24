@@ -18,18 +18,15 @@ function createFeatureVector(place) {
     return [...categoryVector, ...typeVector, ...ratingVector];
 }
 
-// create map here
 
 async function Recommedation(req, res) {
     try {
-        // Fetch user history and all places in parallel
         const [userHistory, allPlaces] = await Promise.all([
-            History.findOne({ user: req.user.id }).populate('place').exec(),
-            Places.find().exec()
+            History.findOne({ user: req.user.id }).populate('place').lean(),
+            Places.find().lean()
         ]);
 
         if (!userHistory) {
-            // Return random places if no history is found
             const randomPlaces = await Places.aggregate([{ $sample: { size: 8 } }]).exec();
             return randomPlaces;
         }
@@ -37,21 +34,16 @@ async function Recommedation(req, res) {
         const visitedPlaces = userHistory.place;
         const visitedFeatureVectors = visitedPlaces.map(createFeatureVector);
 
-        // Compute feature vectors for all places once
-        // loop over all places and for each try to retrieve features from map else extract and chache them
         const allFeatureVectors = allPlaces.map(createFeatureVector);
 
-        // Compute similarity scores
         const similarityScores = allPlaces.map((place, idx) => {
             const placeVector = allFeatureVectors[idx];
             const maxSimilarity = Math.max(...visitedFeatureVectors.map(vec => cosineSimilarity(vec, placeVector)));
             return { place, score: maxSimilarity };
         });
-
-        // Sort by similarity score in descending order
+        
         similarityScores.sort((a, b) => b.score - a.score);
 
-        // Filter out already visited places and get top recommendations
         const recommendedPlaces = similarityScores
             .filter(item => !visitedPlaces.some(visited => visited._id.equals(item.place._id)))
             .slice(0, 10)
