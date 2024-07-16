@@ -4,8 +4,7 @@ const Tours = require('./tours');
 
 const reviewSchema = new mongoose.Schema({
     review: {
-        type: String,
-        required: true
+        type: String
     },
     rating: {
         type: Number,

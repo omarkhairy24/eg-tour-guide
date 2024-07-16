@@ -7,6 +7,7 @@ const catchAsync = require('../middlewares/catchAsync');
 const AppError = require('../middlewares/AppError');
 const Artifacs = require('../models/artifacs');
 const SearchHistory = require('../models/searchHistory');
+const tours = require('../models/tours');
 
 const filteredPlaces = (places,fav) =>{
     return places.map((place,i) =>({
@@ -58,6 +59,39 @@ function generateSearchFields(fields, searchQ) {
     ]);
 }
 
+exports.getPlacesFilter = catchAsync(async (req,res,next) =>{
+    const category = Places.schema.path('category').enumValues;
+    const type = Places.schema.path('type').enumValues;
+    const location = await Places.distinct('govName')
+    res.status(200).json({
+        status:'success',
+        category,
+        type,
+        location
+    })
+
+});
+
+exports.getArtifactFilter = catchAsync(async(req,res,next) =>{
+    const [type , material] = await Promise.all([
+        Artifacs.distinct('type'),
+        Artifacs.distinct('material')
+    ])
+    res.status(200).json({
+        status:'success',
+        type,
+        material
+    })
+})
+
+exports.getTourFilter = catchAsync(async(req,res,next) =>{
+    const type = tours.schema.path('type').enumValues;
+    res.status(200).json({
+        status:'success',
+        type
+    })
+})
+
 exports.getRecommend = async(req,res)=>{
     const places = await Recommedation(req,res)
     res.status(200).json({
@@ -80,7 +114,7 @@ exports.getHome = catchAsync(async(req,res)=>{
         isFav(recommendation, req.user.id),
         isFav(topPlaces, req.user.id),
         isFav(places, req.user.id),
-        Places.find({_id:historyPlaces}).sort({'_id':-1}),
+        Places.find({_id:historyPlaces}).sort({'_id':-1}).limit(10),
         isFav(recentAdded,req.user.id)
     ])
 
@@ -106,7 +140,7 @@ exports.getLandMarks = catchAsync(async (req,res,next) =>{
 
 exports.getLandMark = catchAsync(async (req,res,next)=>{
     const [place,history] = await Promise.all([
-        Places.findById(req.params.placeId).populate('reviews'),
+        Places.findById(req.params.placeId).populate({path: 'reviews',options: { limit: 2, sort: { createdAt: -1 }}}),
         History.findOne({user:req.user.id})
     ]) 
     if(!place) return next(new AppError('not found',404));

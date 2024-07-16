@@ -45,7 +45,7 @@ async function Recommedation(req, res) {
         similarityScores.sort((a, b) => b.score - a.score);
 
         const recommendedPlaces = similarityScores
-            .filter(item => !visitedPlaces.some(visited => visited._id.equals(item.place._id)))
+            // .filter(item => !visitedPlaces.some(visited => visited._id.equals(item.place._id)))
             .slice(0, 10)
             .map(item => item.place);
 

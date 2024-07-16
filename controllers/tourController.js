@@ -9,7 +9,7 @@ const filteredtours = (tours, fav) => {
 	return tours.map((tour, i) => ({
 		_id: tour._id,
 		name: tour.name,
-		image: tour.places[0].place.images[0],
+		image: tour.places?.[0]?.place?.images?.[0] ?? null,
 		duration: tour.duration,
 		ratingAverage: tour.ratingAverage,
 		ratingQuantity: tour.ratingQuantity,
@@ -36,26 +36,32 @@ exports.getTours = catchAsync(async (req, res, next) => {
 });
 
 exports.getTour = catchAsync(async (req, res, next) => {
-	const tour = await Tours.findById(req.params.tourId).populate('reviews');
+	const tour = await Tours.findById(req.params.tourId).populate({path: 'reviews',options: { limit: 2, sort: { createdAt: -1 }}});
 	let images = [];
 	let isSave;
-	tour.places.forEach((place) => {
-		images.push(place.place.images[0]);
-	});
+	if(tour.places.length > 0){
+		tour.places.forEach((place) => {
+			images.push(place.place.images[0]);
+		});
+	}
 	const saved = await Fav.findOne({ user: req.user.id, tour: tour._id });
 
-	if (saved) isSave = true;
+	if (saved) isSave = true
 	else isSave = false;
 
 	const duration = Math.max(...tour.places.map(place => place.day));
-
-	const relatedTours = await Tours.find({
+	let relatedTours = await Tours.find({
 		type: tour.type,
 		_id: { $ne: tour._id },
+		user:null
 	}).limit(5);
 
 	if(tour.user) {
 		tour.type = null
+		relatedTours = await Tours.find({
+			_id: { $ne: tour._id },
+			user:tour.user.id
+		}).limit(5);
 	}
 
 	res.status(200).json({
@@ -72,10 +78,7 @@ exports.getTour = catchAsync(async (req, res, next) => {
 			saved: isSave,
 			reviews: tour.reviews,
 		},
-		relatedTours: filteredtours(
-			relatedTours,
-			await isFav(relatedTours, req.user.id)
-		),
+		relatedTours:filteredtours (relatedTours,await isFav(relatedTours, req.user.id))
 	});
 });
 
@@ -281,12 +284,12 @@ exports.deleteTour = catchAsync(async (req, res, next) => {
 });
 
 exports.getUserTours = catchAsync(async(req,res,next) =>{
-	const tours = await Tours.find({user:req.user.id});
+	let tours = await Tours.find({user:req.user.id});
 	tours.map(tour =>{
 		tour.type = undefined
 	})
 	res.status(200).json({
 		status:'success',
-		tours:filteredtours(tours,await isFav(tours,req.user.id))
+		tours:filteredtours(tours,await isFav(tours,req.user.id)) 
 	})
 })

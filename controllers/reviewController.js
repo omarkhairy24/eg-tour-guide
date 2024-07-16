@@ -69,3 +69,19 @@ exports.deleteReview = catchAsync(async (req,res,next)=>{
         message:'review deleted successfully'
     })
 });
+
+exports.getReviewsPlace = catchAsync(async(req,res,next)=>{
+    const reviews = await Review.find({place:req.params.placeId})
+    res.status(200).json({
+        status:'success',
+        reviews
+    })
+})
+
+exports.getReviewsTour = catchAsync(async(req,res,next)=>{
+    const reviews = await Review.find({tour:req.params.tourId})
+    res.status(200).json({
+        status:'success',
+        reviews
+    })
+})
