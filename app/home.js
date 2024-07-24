@@ -7,7 +7,6 @@ const catchAsync = require('../middlewares/catchAsync');
 const AppError = require('../middlewares/AppError');
 const Artifacs = require('../models/artifacs');
 const SearchHistory = require('../models/searchHistory');
-const tours = require('../models/tours');
 
 const filteredPlaces = (places,fav) =>{
     return places.map((place,i) =>({
@@ -59,39 +58,6 @@ function generateSearchFields(fields, searchQ) {
     ]);
 }
 
-exports.getPlacesFilter = catchAsync(async (req,res,next) =>{
-    const category = Places.schema.path('category').enumValues;
-    const type = Places.schema.path('type').enumValues;
-    const location = await Places.distinct('govName')
-    res.status(200).json({
-        status:'success',
-        category,
-        type,
-        location
-    })
-
-});
-
-exports.getArtifactFilter = catchAsync(async(req,res,next) =>{
-    const [type , material] = await Promise.all([
-        Artifacs.distinct('type'),
-        Artifacs.distinct('material')
-    ])
-    res.status(200).json({
-        status:'success',
-        type,
-        material
-    })
-})
-
-exports.getTourFilter = catchAsync(async(req,res,next) =>{
-    const type = tours.schema.path('type').enumValues;
-    res.status(200).json({
-        status:'success',
-        type
-    })
-})
-
 exports.getRecommend = async(req,res)=>{
     const places = await Recommedation(req,res)
     res.status(200).json({
@@ -130,11 +96,23 @@ exports.getHome = catchAsync(async(req,res)=>{
 
 exports.getLandMarks = catchAsync(async (req,res,next) =>{
     const places = await Places.find().select('name images govName category ratingAverage ratingQuantity').lean();
-    const isFavPlaces = await isFav(places,req.user.id)
+
+    const [isFavPlaces,location] = await Promise.all([
+        isFav(places,req.user.id),
+        Places.distinct('govName')
+    ])
+
+    const category = Places.schema.path('category').enumValues;
+    const type = Places.schema.path('type').enumValues;
 
     res.status(200).json({
         status:'success',
-        places:filteredPlaces(places,isFavPlaces)
+        places:filteredPlaces(places,isFavPlaces),
+        filter:{
+            category,
+            type,
+            location
+        }
     })
 })
 
@@ -187,10 +165,18 @@ exports.getLandMark = catchAsync(async (req,res,next)=>{
 })
 
 exports.getArtifacts = catchAsync(async(req,res,next) =>{
-    const artifacs = await Artifacs.find().select('name images material museum type').sort({ar:-1})
+    const [artifacs,type , material] = await Promise.all([
+        Artifacs.find().select('name images material museum type').sort({ar:-1}),
+        Artifacs.distinct('type'),
+        Artifacs.distinct('material')
+    ])
     res.status(200).json({
         status:'success',
-        artifacs:filteredartifacs(artifacs,await isFavArtifacs(artifacs,req.user.id))
+        artifacs:filteredartifacs(artifacs,await isFavArtifacs(artifacs,req.user.id)),
+        filter:{
+            type,
+            material
+        }
     })
 })
 
@@ -225,13 +211,32 @@ exports.search = catchAsync(async(req,res,next)=>{
     let searchQ = req.query.searchQ
     await SearchHistory.create({search:searchQ,user:req.user.id});
     let resultField = generateSearchFields(['name' , 'category' , 'govName'],searchQ)
-    const placeResult = await Places.find({ $or: resultField });
-    const artifacResult = await Artifacs.find({ $or: resultField }).populate('museum');
+    const [placeResult,artifacResult,artifactType , material,location] = await Promise.all([
+        Places.find({ $or: resultField }),
+        Artifacs.find({ $or: resultField }).populate('museum'),
+        Artifacs.distinct('type'),
+        Artifacs.distinct('material'),
+        Places.distinct('govName')
+    ])
+    const category = Places.schema.path('category').enumValues;
+    const placeType = Places.schema.path('type').enumValues;
+
     res.status(200).json({
         status: 'success',
         data: {
             places: filteredPlaces(placeResult ,await isFav(placeResult,req.user.id) ),
             artifacs: filteredartifacs(artifacResult,await isFavArtifacs(artifacResult),req.user.id)
+        },
+        filter:{
+            placeFilter:{
+                category,
+                placeType,
+                location
+            },
+            artifactFilter:{
+                artifactType,
+                material
+            }
         }
     }); 
 });
@@ -254,7 +259,6 @@ exports.getSearchHistory = catchAsync(async(req,res,next)=>{
 exports.deleteSearchHistory = catchAsync(async(req,res,next) =>{
     await SearchHistory.deleteMany({user:req.user.id})
     res.status(200).json({
-        status:'success',
-
+        status:'success'
     })
 })

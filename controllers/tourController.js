@@ -29,9 +29,13 @@ const isFav = async (tours, userId) => {
 
 exports.getTours = catchAsync(async (req, res, next) => {
 	const tours = await Tours.find({user:null}).lean();
+	const type = Tours.schema.path('type').enumValues;
 	res.status(200).json({
 		status: 'success',
 		tours: filteredtours(tours, await isFav(tours, req.user.id)),
+		filter:{
+			type
+		}
 	});
 });
 
@@ -288,8 +292,12 @@ exports.getUserTours = catchAsync(async(req,res,next) =>{
 	tours.map(tour =>{
 		tour.type = undefined
 	})
+	const type = Tours.schema.path('type').enumValues;
 	res.status(200).json({
 		status:'success',
-		tours:filteredtours(tours,await isFav(tours,req.user.id)) 
+		tours:filteredtours(tours,await isFav(tours,req.user.id)),
+		filter:{
+			type
+		}
 	})
 })

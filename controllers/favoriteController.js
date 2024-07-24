@@ -1,5 +1,8 @@
 const Favorite = require('../models/favoritePlace');
 const catchAsync = require('../middlewares/catchAsync');
+const Places = require('../models/places');
+const Tours = require('../models/tours');
+const Artifacs = require('../models/artifacs');
 
 
 const filteredPlaces = (places) =>{
@@ -36,17 +39,38 @@ const filteredtours = (tours) => {
 };
 
 exports.getFavorites = catchAsync(async(req,res,nex)=>{
-    const [favPlaces , favArtifacs,favTours] = await Promise.all([
+    const [favPlaces , favArtifacs,favTours,location,artifactType,material] = await Promise.all([
         Favorite.find({user:req.user.id , place:{$ne:null}}).select('place'),
         Favorite.find({user:req.user.id,artifacs:{$ne:null}}).select('artifacs'),
         Favorite.find({user:req.user.id,tour:{$ne:null}}).select('tour'),
+        Places.distinct('govName'),
+        Artifacs.distinct('type'),
+        Artifacs.distinct('material')
     ])
+
+    const category = Places.schema.path('category').enumValues;
+    const placeType = Places.schema.path('type').enumValues;
+    const tourType = Tours.schema.path('type').enumValues;
     
     res.status(200).json({
         status:'success',
         places:filteredPlaces(favPlaces),
         artifacs:filteredartifacs(favArtifacs),
-        tours:filteredtours(favTours)
+        tours:filteredtours(favTours),
+        filter:{
+            placeFilter:{
+                category,
+                placeType,
+                location
+            },
+            artifactFilter:{
+                artifactType,
+                material
+            },
+            tourFilter:{
+                tourType
+            }
+        }
     })
 })
 

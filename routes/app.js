@@ -11,12 +11,6 @@ router.get('/search-history',authController.protect,appController.getSearchHisto
 
 router.get('/landmarks',authController.protect,appController.getLandMarks);
 
-router.get('/placesFilter',appController.getPlacesFilter);
-
-router.get('/artifactsFilter',appController.getArtifactFilter);
-
-router.get('/tourFilter',appController.getTourFilter);
-
 router.get('/landmark/:placeId',authController.protect,appController.getLandMark);
 
 router.get('/artifacs',authController.protect,appController.getArtifacts);
