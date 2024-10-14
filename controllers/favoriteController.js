@@ -4,7 +4,6 @@ const Places = require('../models/places');
 const Tours = require('../models/tours');
 const Artifacs = require('../models/artifacs');
 
-
 const filteredPlaces = (places) =>{
     return places.map(place =>({
         _id:place.place._id,
